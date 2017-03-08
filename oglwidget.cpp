@@ -4,19 +4,19 @@
 #include "iostream"
 #include "QPoint"
 #include "QTimer"
+#include "GL/gl.h"
 using namespace std;
-
-
 typedef float HOM_MAT[16];
+typedef float HOM_Vect[4];
 
 HOM_MAT a;
-
-void HOMs_Product( HOM_MAT (mat1),HOM_MAT(mat2),HOM_MAT (result)){
+#define PI 3.1415926
+void HOMs_Product( HOM_MAT mat1,HOM_MAT mat2,HOM_MAT result){
 
     for(int row=0;row<4;row++){
         for(int col = 0;col<4;col++){
                 for(int i=0;i<4;i++){
-                    result[row*4+col]+=mat1[row*4+i]*mat2[i*4+row];
+                    result[row*4+col]+=mat1[row*4+i]*mat2[i*4+col];
                 }
         }
     }
@@ -32,25 +32,47 @@ void copyMat(HOM_MAT res,HOM_MAT dst){
 
 }
 
-void HOM_MAT_Trans(HOM_MAT mat){
+void VectHomOpera(HOM_Vect vect,HOM_MAT hom,HOM_Vect res){
+
+    for(int i=0;i<4;i++){
+        res[i]=0;
+        for(int j=0;j<4;j++){
+                res[i] += vect[j]*hom[j*4+i];
+        }
+    }
+}
+
+void HOM_MAT_Scale(HOM_MAT mat,float scale){
+    for(int i=0;i<15;i++){
+        mat[i]*=scale;
+    }
+}
+
+void HOM_MAT_Invers(HOM_MAT mat){
 
     float tmp;
 
-    for(int col=0;col<4;col++){
+    //对旋转矩阵求逆
 
-          for(int row = col;row<4;row++){
+    for(int col=0;col<3;col++){
+          for(int row = col;row<3;row++){
                 if(row==0) continue;
-
                 tmp = mat[col*4+row];
                 mat[col*4+row] = mat[row*4+col];
                 mat[row*4+col] = tmp;
-
-
           }
-
+    }
+    float tmpx[3];
+    for(int i = 0;i<3;i++){
+        for(int j=0;j<3;j++){
+            tmpx[i]+= mat[j*4+i]*mat[12+j];
+        }
+    }
+    for(int i=0;i<3;i++){
+        mat[12+i] = -tmpx[i];
     }
 
-
+    //qDebug("%f  %f  %f",tmpx[0],tmpx[1],tmpx[2]);
 
 }
 
@@ -63,233 +85,76 @@ void HOM_Print(HOM_MAT mat){
     for(int i=0;i<4;i++)
     {
 
-          qDebug("%f %f %f %f",mat[i*4+0],mat[i*4+1],mat[i*4+2],mat[i*4+3]);
+          qDebug("%f   %f   %f   %f",mat[i*4+0],mat[i*4+1],mat[i*4+2],mat[i*4+3]);
 
     }
 
         qDebug("---------------------");
 }
 
-
-
-
-void DrawSquare(void){
-    glBegin(GL_POLYGON); //前表面
-    glVertex3f(50.0f,50.0f,50.0f);
-    glVertex3f(50.0f,-50.0f,50.0f);
-    glVertex3f(-50.0f,-50.0f,50.0f);
-    glVertex3f(-50.0f,50.0f,50.0f);
-    glEnd();
-
-    glBegin(GL_POLYGON); //后表面
-    glVertex3f(50.0f,50.0f,-50.0f);
-    glVertex3f(50.0f,-50.0f,-50.0f);
-    glVertex3f(-50.0f,-50.0f,-50.0f);
-    glVertex3f(-50.0f,50.0f,-50.0f);
-    glEnd();
-
-
-    glBegin(GL_POLYGON); //上表面
-    glVertex3f(50.0f,50.0f,-50.0f);
-    glVertex3f(50.0f,50.0f,50.0f);
-    glVertex3f(-50.0f,50.0f,50.0f);
-    glVertex3f(-50.0f,50.0f,-50.0f);
-    glEnd();
-
-    glBegin(GL_POLYGON); //下表面
-    glVertex3f(50.0f,-50.0f,-50.0f);
-    glVertex3f(50.0f,-50.0f,50.0f);
-    glVertex3f(-50.0f,-50.0f,50.0f);
-    glVertex3f(-50.0f,-50.0f,-50.0f);
-    glEnd();
-
-    glBegin(GL_POLYGON); //左表面
-    glVertex3f(50.0f,50.0f,50.0f);
-    glVertex3f(50.0f,50.0f,-50.0f);
-    glVertex3f(50.0f,-50.0f,-50.0f);
-    glVertex3f(50.0f,-50.0f,50.0f);
-    glEnd();
-
-    glBegin(GL_POLYGON); //右表面
-    glVertex3f(-50.0f,50.0f,50.0f);
-    glVertex3f(-50.0f,50.0f,-50.0f);
-    glVertex3f(-50.0f,-50.0f,-50.0f);
-    glVertex3f(-50.0f,-50.0f,50.0f);
-    glEnd();
-}
-#define PI 3.1415926
-
-float TransMat[3][3]={{1,2,3},
-                      {4,5,6},
-                      {0.5774,0.5774,0.5774}};
-void TransVect(float x,float y,float z,float Trans[3][3],float out[3]){
-
-    out[0] =x*Trans[0][0]+y*Trans[1][0]+z*Trans[2][0];
-    out[1] =x*Trans[0][1]+y*Trans[1][1]+z*Trans[2][1];
-    out[2] =x*Trans[0][2]+y*Trans[1][2]+z*Trans[2][2];
-
-
-}
 float input[3];
 float output[3];
-void DrawS(float length,float weight,float high,float Gx,float Gy,float Gz,float x,float y,float z){
-
-     float AngleX,AngleY,AngleZ; //根据方向向量计算分别许要绕三个方向旋转的角度。
-
-     glPushMatrix();
-
-//     AngleZ =atan(Gy/Gx)/PI*180;
-//     AngleY =atan(Gx/Gz)/PI*180;
-//     AngleX =atan(Gz/Gy)/PI*180;
-//    cout<<"Angle around X:"<<AngleX<<endl;
-//    cout<<"Angle around Y:"<<AngleY<<endl;
-//    cout<<"Angle around Z:"<<AngleZ<<endl;
-
-
-    glRotatef(x,1,0,0);
-    glRotatef(y,0,1,0);
-    glRotatef(z,0,0,1);
-
-
-
-
-
-    glBegin(GL_LINES);
-
-    glVertex3f(0,0,0);
-
-
-
-    glVertex3f(0,0,1000);
-
-    glVertex3f(0,0,0);
-    glVertex3f(0,1000,0);
-
-    glVertex3f(0,0,0);
-
-    glVertex3f(1000,0,0);
-
-    glEnd();
-
-    glBegin(GL_POLYGON); //前表面
-    glVertex3f(length/2,high/2,weight/2);
-    glVertex3f(length/2,-high/2,weight/2);
-    glVertex3f(-length/2,-high/2,weight/2);
-    glVertex3f(-length/2,high/2,weight/2);
-    glEnd();
-
-    glBegin(GL_POLYGON); //后表面
-    glVertex3f(length/2 ,   high/2,-weight/2);
-    glVertex3f(length/2 ,  -high/2,-weight/2);
-    glVertex3f(-length/2,  -high/2,-weight/2);
-    glVertex3f(-length/2,   high/2,-weight/2);
-    glEnd();
-
-    glBegin(GL_POLYGON); //上表面
-    glVertex3f(length/2,high/2,-weight/2);
-    glVertex3f(length/2,high/2,weight/2);
-    glVertex3f(-length/2,high/2,weight/2);
-    glVertex3f(-length/2,high/2,-weight/2);
-    glEnd();
-
-    glBegin(GL_POLYGON); //下表面
-    glVertex3f(length/2,-high/2,-weight/2);
-    glVertex3f(length/2,-high/2,weight/2);
-    glVertex3f(-length/2,-high/2,weight/2);
-    glVertex3f(-length/2,-high/2,-weight/2);
-    glEnd();
-
-    glBegin(GL_POLYGON); //右表面
-    glVertex3f(length/2,high/2,weight/2);
-    glVertex3f(length/2,high/2,-weight/2);
-    glVertex3f(length/2,-high/2,-weight/2);
-    glVertex3f(length/2,-high/2,weight/2);
-    glEnd();
-
-    glBegin(GL_POLYGON); //右表面
-    glVertex3f(-length/2,high/2,weight/2);
-    glVertex3f(-length/2,high/2,-weight/2);
-    glVertex3f(-length/2,-high/2,-weight/2);
-    glVertex3f(-length/2,-high/2,weight/2);
-    glEnd();
-
-    glPopMatrix();
-
-}
-
 
 void DrawArm(float length,float weight,float high){
-
-    glBegin(GL_POLYGON); //前表面
+    glLineWidth(1);
+    glBegin(GL_LINES); //前表面
+    glColor3f(1,1.0,1.0);     // 设置当前色为红色
     glVertex3f(length/2,high,weight/2);
     glVertex3f(length/2,0,weight/2);
     glVertex3f(-length/2,0,weight/2);
     glVertex3f(-length/2,high,weight/2);
     glEnd();
-
-    glBegin(GL_POLYGON); //后表面
+    glBegin(GL_LINES); //后表面
+    glColor3f(1.0,1.0,1.0);     // 设置当前色为红色
     glVertex3f(length/2 ,   high,-weight/2);
     glVertex3f(length/2 ,  0,-weight/2);
     glVertex3f(-length/2,  0,-weight/2);
     glVertex3f(-length/2,   high,-weight/2);
     glEnd();
-
-    glBegin(GL_POLYGON); //上表面
+    glBegin(GL_LINES); //上表面
     glVertex3f(length/2,high,-weight/2);
     glVertex3f(length/2,high,weight/2);
     glVertex3f(-length/2,high,weight/2);
     glVertex3f(-length/2,high,-weight/2);
     glEnd();
-
-    glBegin(GL_POLYGON); //下表面
+    glBegin(GL_LINES); //下表面
     glVertex3f(length/2,0,-weight/2);
     glVertex3f(length/2,0,weight/2);
     glVertex3f(-length/2,0,weight/2);
     glVertex3f(-length/2,0,-weight/2);
     glEnd();
-
-    glBegin(GL_POLYGON); //右表面
+    glBegin(GL_LINES); //右表面
     glVertex3f(length/2,high,weight/2);
     glVertex3f(length/2,high,-weight/2);
     glVertex3f(length/2,0,-weight/2);
     glVertex3f(length/2,0,weight/2);
     glEnd();
-
-    glBegin(GL_POLYGON); //右表面
+    glBegin(GL_LINES); //右表面
     glVertex3f(-length/2,high,weight/2);
     glVertex3f(-length/2,high,-weight/2);
     glVertex3f(-length/2,0,-weight/2);
     glVertex3f(-length/2,0,weight/2);
     glEnd();
-
-
 }
 
 
-void DrawCoordinates(){
-
-
+void DrawCoordinates(float length){
         glLineWidth(2);
-
         glBegin(GL_LINES);
-
-
-
+        glColor3f(1,0,0);
         glVertex3f(0,0,0);
-
-        glVertex3f(0,0,1000);
-
+        glVertex3f(length,0,0);
+        glColor3f(0,1,0);
         glVertex3f(0,0,0);
-        glVertex3f(0,1000,0);
+        glVertex3f(0,length,0);
+        glColor3f(0,0,1);
         glVertex3f(0,0,0);
-        glVertex3f(1000,0,0);
+        glVertex3f(0,0,length);
         glEnd();
 }
 
 
 void OGLWidget::mousePressEvent(QMouseEvent *event){
-
-
 
     MouseStart.setX(event->x());
     MouseStart.setY(event->y());
@@ -317,13 +182,13 @@ void OGLWidget::mouseMoveEvent ( QMouseEvent  * e )//鼠标移动事件响应
     if(e->buttons()&Qt::LeftButton){
     value3 = nowAngle.x()+(e->x()-MouseStart.x())*0.5;
     value2= nowAngle.y()+(e->y()-MouseStart.y())*0.5;
-        //this->repaint();
+         needRepaint =true;
     }
     if(e->buttons()&Qt::MiddleButton){
 
         Vx -= lastX-e->x();
         Vy +=  lastY-e->y();
-        this->repaint();
+         needRepaint =true;
     }
 
     lastX = e->x();
@@ -336,7 +201,7 @@ void OGLWidget::wheelEvent(QWheelEvent *event){
     scale+=event->delta()*0.0005;
 
     cout<<scale<<endl;
-   // repaint();
+    needRepaint =true;
 
 }
 
@@ -348,8 +213,8 @@ OGLWidget::OGLWidget(QWidget *parent)
 
         connect(testTimer,SIGNAL(timeout()),this,SLOT(TimeBasedPaint()));
 
-        testTimer->start(1000/20);
-
+        testTimer->start(1000/50);
+        serialReady = false;
 }
 
 OGLWidget::~OGLWidget()
@@ -359,80 +224,179 @@ OGLWidget::~OGLWidget()
 
 void OGLWidget::initializeGL()
 {
-    glClearColor(0,0,0,1);
+    //glClearColor(0,0,0,1);
     glEnable(GL_DEPTH_TEST);
-   // glEnable(GL_LIGHT0);
-  //  glEnable(GL_LIGHTING);
-   // glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-   // glEnable(GL_COLOR_MATERIAL);
+
+
+
 }
 
 
 
 void OGLWidget::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glMatrixMode(GL_MODELVIEW);
+    //glMatrixMode(GL_PROJECTION);
     glLoadIdentity(); //加载初始坐标系
     glTranslated(Vx,Vy,Vz); //先进行平移操作。
     glRotatef(value2,1,0,0);
     glRotatef(value3,0,1,0); //再以此以三个轴位中心做三次旋转
     glScalef(scale,scale,scale);
 
-    float mat[16];// get the modelview matrix
-    glGetFloatv(GL_MODELVIEW_MATRIX, mat);
+    //glLoadIdentity();
 
+    float mat_aftercodtrans[16];// get the modelview matrix
+    glGetFloatv(GL_MODELVIEW_MATRIX, mat_aftercodtrans);
 
+    emit update_mat_info(mat_aftercodtrans,0);
+
+    qDebug("mat_aftercod");
+
+    //HOM_Print(mat_aftercodtrans);
 
     glPushMatrix();
-
-
     //节点关节1
-    DrawArm(20,20,300);
-    glTranslated(0,320,0);
+    DrawArm(20,20,821.5);
+    glTranslatef(0,821.5,0);
+    DrawCoordinates(100);
 
     //节点关节2
-    glRotated(joint1.rotate_x,1,0,0);
     glRotated(joint1.rotate_y,0,1,0);
-    glRotated(joint1.rotate_z,0,0,1);
 
+    DrawCoordinates(100);
+    glPushMatrix();
     glRotated(90,0,0,1);
+    DrawArm(20,20,670);
+    glPopMatrix();
+    glTranslated(-joint2.trans_x,0,0);
 
-    DrawArm(20,20,300);
+    DrawCoordinates(30);
+    DrawArm(20,20,670);
+    glTranslated(0,-joint2.trans_y,0);
 
-    glTranslated(joint2.trans_x,joint2.trans_y,0);
-
-    glRotated(90,0,0,1);
-
-    DrawArm(20,20,300);
-
-    glTranslated(0,320,0);
-
-    glRotated(90,0,0,1);
-
+    DrawCoordinates(30);
     DrawArm(20,20,30);
+    glRotated(joint3.rotate_y,0,1,0);
+
+    DrawCoordinates(30);
+   // DrawArm(20,20,30);
+    glRotated(joint4.rotate_z,0,0,1);
+
+    glTranslated(0,-108.33,0);
+
+    DrawCoordinates(30);
+    DrawArm(20,20,20);
+    HOM_MAT res={},mat={};
+
+
+
+
+
+
+   // copyMat(mat_aftercodtrans,mat);
+
+    HOM_MAT_Invers(mat_aftercodtrans);
+
+  //  emit update_mat_info(mat,0);
+
+    //emit update_mat_info(mat_aftercodtrans ,1);
 
     glGetFloatv(GL_MODELVIEW_MATRIX, mat);
 
 
-    //HOM_Print(mat);
-     HOM_MAT tmp,res;
+    //HOM_MAT_Scale(mat,1/scale);
+    emit update_mat_info(mat ,1);
 
-    emit update_mat_info(mat,0);
+    //qDebug("invers");
 
-    HOM_MAT_Trans(mat);
 
-    copyMat(mat,tmp);
 
-    HOM_MAT_Trans(mat);
+    //HOM_MAT_Scale(mat_aftercodtrans,1/scale);
 
-    HOMs_Product(mat,tmp,res);
 
-    emit update_mat_info(res,1);
+
+    HOMs_Product(mat,mat_aftercodtrans,res);
+
+    HOM_MAT_Scale(res,1/scale/scale);
+
+    emit update_mat_info(res ,2);
+      HOM_Print(res);
+
+    HOM_Vect Point_O={0,10,0,1},Point_END_EFFECTS;
+
+    //VectHomOpera(Point_O,res,Point_END_EFFECTS);
+
+   // emit update_mat_info(Point_END_EFFECTS,3);
+
+   // qDebug("aa %f  %f   %f",Point_END_EFFECTS[0],Point_END_EFFECTS[1],Point_END_EFFECTS[2]);
 
     glPopMatrix();
 
-    DrawCoordinates();
+    DrawCoordinates(1000);
+
+//    glPointSize(5);
+
+    for(int i=0;i<points.size();i++){
+
+        glPointSize(1);
+        glBegin(GL_POINTS);
+        glColor3f(1,1,1);
+        glVertex3f(points.at(i)[0],points.at(i)[2],points.at(i)[1]);
+//        glColor3f(0,1,0);
+//        glVertex3f(points.at(i)[0],0,points.at(i)[1]);
+        glEnd();
+        }
+
+    glColor3f(1,1,1);
+    glLineWidth(5);
+    glBegin(GL_LINES);
+
+//    HOM_Vect o={0,0,0,1};
+//    HOM_Vect x={100,0,0,1};
+//    HOM_Vect y={0,100,0,1};
+//    HOM_Vect z={0,0,100,1};
+//    HOM_Vect axis_after={0,0,0,1};
+
+    glColor3f(1,0,0);
+
+    //VectHomOpera(o,res,axis_after);
+    //glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
+
+    glVertex3f(0,0,0);
+    glVertex3f(res[0]*100,res[1]*100,res[2]*100);
+
+//    VectHomOpera(x,res,axis_after);
+//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
+
+
+    glColor3f(0,1,0);
+//    VectHomOpera(o,res,axis_after);
+//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
+
+
+//    VectHomOpera(y,res,axis_after);
+//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
+
+
+    glVertex3f(0,0,0);
+    glVertex3f(res[0+4]*100,res[1+4]*100,res[2+4]*100);
+
+
+    glColor3f(0,0,1);
+
+//    VectHomOpera(o,res,axis_after);
+//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
+
+//    VectHomOpera(z,res,axis_after);
+//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
+
+
+    glVertex3f(0,0,0);
+    glVertex3f(res[0+8]*100,res[1+8]*100,res[2+8]*100);
+
+    glEnd();
+
 
 
 
@@ -448,25 +412,35 @@ void OGLWidget::resizeGL(int w, int h)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-
-    glEnable(GL_LIGHTING);          //启用光照
-    glEnable(GL_LIGHT0);            //打开第一个灯光
-
-    glOrtho (-w/2, w/2, -h/2, h/2, -100000, 10000);
+    glEnable(GL_COLOR_MATERIAL );
+    glOrtho (-w, w, -h, h, -100000, 10000);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_DITHER);
     glShadeModel(GL_SMOOTH);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
-    scale=0.5;
+    scale=1;
 
 }
 
 void OGLWidget:: TimeBasedPaint(){
 
    // value3+=10;
+    if(needRepaint)
+    {
+        repaint();
+        needRepaint = false;
+    }
 
-     repaint();
+    USB_Trans_TypeDef USB_trans;
+
+    if(serialReady){
+    USB_trans.Servo_Motor_Pitch_Angle = (joint3.rotate_y/360.f)*2000.f+500;
+    USB_trans.Servo_Motor_Yaw_Angle = (joint4.rotate_z/360.f)*2000.f+500;
+    serial->write((char*)&USB_trans,sizeof(USB_Trans_TypeDef));
+
+    qDebug("TransMit");
+
+    }
 
 }

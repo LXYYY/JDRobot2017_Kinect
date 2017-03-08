@@ -3,6 +3,11 @@
 
 #include <QMainWindow>
 #include "QString"
+
+#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
+#include <iostream>
+using namespace std;
 namespace Ui {
 class MainWindow;
 }
@@ -15,18 +20,54 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+
+    uint8_t data[1];
+
 private slots:
-    void on_horizontalSlider_3_valueChanged(int value);
 
-    void on_horizontalSlider_2_valueChanged(int value);
 
-    void on_horizontalSlider_valueChanged(int value);
-
-    void on_horizontalSlider_4_valueChanged(int value);
+    void  acceptConnection();
 
     void update_mat_display(float*,int index);
 
     void repaint();
+
+    void draw1Point(float* points, int size);
+
+    void on_Main_Axis_ADJ_valueChanged(int value);
+
+    void on_Horizontal_Axis_ADJ_valueChanged(int value);
+
+    void on_Vertical_Axis_ADJ_valueChanged(int value);
+
+    void on_END_Effecter_ADJ1_valueChanged(int value);
+
+    void on_END_Effecter_ADJ2_valueChanged(int value);
+
+    void on_Move_X_valueChanged(int value);
+
+    void on_Move_Y_valueChanged(int value);
+
+    void on_Move_z_valueChanged(int value);
+
+    void caculateInvers(float x,float y,float z);
+
+    void on_pushButton_clicked();
+
+    void timeup();
+    void on_pushButton_2_clicked();
+
+    void on_startPort_Button_clicked();
+
+    void on_pubm_Contorl_Button_clicked();
+
+    void on_solid_control_button_clicked();
+
+    void Read_Data();
+
+    void on_Rotate_valueChanged(int value);
+
+    void tttest();
 
 private:
     Ui::MainWindow *ui;
