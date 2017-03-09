@@ -12,7 +12,6 @@
 #include "globject.h"
 #include "globject.h"
 #include "Threads/Threads.h"
-#include "opencvProc/cvProcesser.h"
 using namespace std;
 
 #include <QtSerialPort/QSerialPort>
@@ -21,7 +20,6 @@ Dialog *w;
 
 QSerialPort *serial;
 QTcpServer *server;
-cvProcesser *processer;
 void MainWindow:: acceptConnection()
 {
     QTcpSocket *_tmpSocket= server->nextPendingConnection();
@@ -37,7 +35,7 @@ void MainWindow:: acceptConnection()
     //connect(client,SIGNAL(updateText(QString)),this,SLOT(updateTextEdit(QString)));
     //connect(client,SIGNAL(updateUI(Car_Info*)),this,SLOT(carChange(Car_Info*)));
 
-    qDebug()<<_tmpSocket->peerAddress().toString();
+//    qDebug()<<_tmpSocket->peerAddress().toString();
 
 }
 
@@ -70,6 +68,7 @@ void MainWindow::draw1Point(float *points, int size){
     ui->openGLWidget->needRepaint = true;
 }
 MyThread* myThread;
+Communication* communicator;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -102,10 +101,12 @@ MainWindow::MainWindow(QWidget *parent) :
     //setMouseTracking(true);
 
     myThread= new MyThread();
-
+    communicator =new Communication();
+    connect(myThread,SIGNAL(sendPoint(float*)),communicator,SLOT(sendPoint(float*)));
     //connect(myThread,SIGNAL(drawPoints(float*,size_t)),this,SLOT(draw1Point(float*,size_t)));
     connect(myThread,SIGNAL(drawPoints(float*,int)),this,SLOT(draw1Point(float*,int)));
     myThread->start();
+    communicator->start();
 }
 
 MainWindow::~MainWindow()
@@ -132,7 +133,7 @@ void MainWindow::update_mat_display(float  mat[16],int index ){
 void MainWindow::repaint(){
 
     ui->tableWidget->horizontalHeader()->setFixedWidth(ui->tableWidget->width()/4);
-    qDebug("Repaint");
+//    qDebug("Repaint");
 }
 
 
@@ -191,9 +192,9 @@ void MainWindow::caculateInvers(float x,float y,float z){
     ui->openGLWidget->needRepaint = true;
 
 
-    qDebug("x:%f,y:%f,Z:%f",x,y,z);
+//    qDebug("x:%f,y:%f,Z:%f",x,y,z);
 
-    qDebug("a2:%f",2*atan(sqrt(x + (x*x + z*z))/z));
+//    qDebug("a2:%f",2*atan(sqrt(x + (x*x + z*z))/z));
 
     ui->End_Effect_Rotate_1->display(ui->openGLWidget->joint3.rotate_y);
     ui->Vertical_Axis_Display->display(ui->openGLWidget->joint2.trans_y);
@@ -297,7 +298,7 @@ void MainWindow::Read_Data(){
     serial->read(data,sizeof(USB_Trans_TypeDef));
 
 
-    qDebug("%f,%f",ReceiveBuffer.Servo_Motor_Pitch_Angle,ReceiveBuffer.Servo_Motor_Yaw_Angle);
+//    qDebug("%f,%f",ReceiveBuffer.Servo_Motor_Pitch_Angle,ReceiveBuffer.Servo_Motor_Yaw_Angle);
 
 }
 
@@ -350,6 +351,6 @@ void MainWindow::on_Rotate_valueChanged(int value)
 
 void MainWindow:: tttest(){
 
-    qDebug("Fuck You");
+//    qDebug("Fuck You");
 
 }

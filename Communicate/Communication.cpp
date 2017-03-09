@@ -1,6 +1,6 @@
 #include "Communication.h"
 
-Communication communicator;
+//Communication communicator;
 
 Communication::Communication() {
 }
@@ -64,4 +64,12 @@ bool Communication::connect(void) {
         return false;
     }
     return true;
+}
+
+void Communication::run(){
+    connect();
+}
+
+void Communication::sendPoint(float *point){
+    sendFrame(0,point[0],point[1],point[2]);
 }

@@ -5,11 +5,8 @@
 #ifndef JDROBOT_THREADS_H
 #define JDROBOT_THREADS_H
 #include "../Communicate/Communication.h"
-#include "../openGLShow/glViewer.h"
 #include <QThread>
 #include <opencv2/opencv.hpp>
-#include "opencvProc/cvProcesser.h"
-
 #include "Threads/Threads.h"
 
 /// [headers]
@@ -22,16 +19,25 @@
 #include "../Communicate/Communication.h"
 #include <GL/gl.h>
 #include "Threads/Threads.h"
-extern Communication communicator;
-bool createThread();
-void kinect();
+#include "AprilTagsClass/AprilTagsClass.h"
 extern pthread_mutex_t mutex;
 
 class MyThread : public QThread
 {
     Q_OBJECT
 public:
-
+    enum ColorE{
+        Green=0,
+        Blue,
+        Yellow
+    };
+    enum ModeE{
+        SEARCH_BOX=0,
+        SEARCH_CASE=1,
+        PAUSE=2
+    };
+    enum ModeE mode=SEARCH_CASE;
+    AprilTagsClass aprilTags;
     libfreenect2::Freenect2Device::IrCameraParams irParams;
     libfreenect2::Freenect2Device::ColorCameraParams colorParams;
     Mat rgbMat;
@@ -42,14 +48,24 @@ public:
     Mat rgbd2;
     Mat backGround;
     Mat foreGround;
-    vector<vector<Point3f>> boxPoints3dW,boxPoints3dG;
-    vector<vector<pair<Point2f,float>>> boxPointsDepth;
+    struct BoxS{
+        Point2f center;
+        Size size;
+        Point2f pts[4];
+        float z;
+        int color;
+        Point2f dir;
+        vector<Point3f> boxPoints3dW;
+        vector<Point3f> boxPoints3dG;
+        vector<Point3f> boxPointsDepth;
+    };
+    vector<struct BoxS> boxes;
     int npts;
-    vector<vector<pair<Point2f,float>>> groundPts;
-    Mat R2G,T2G;
+    vector<Point3f> groundPts;
+    Mat R2G,T2G,T2O;
     Mat rotationMat;
     bool rotationMatInited=false;
-
+    bool ifBackGoundSet=false;
     bool stop ;
     explicit MyThread(QObject *parent = 0);
     void run();
@@ -62,20 +78,19 @@ public:
 
     void init(libfreenect2::Freenect2Device *dev);
 
-    bool getBoxPoints3d(vector<vector<pair<Point2f,float>>> inputPts, vector<vector<Point3f> > &outputPts) ;
+    vector<Point3f> getBoxPoints3d(vector<Point3f> inputPts) ;
 
-    bool getBoxPointsDepth(Mat depthMat, Mat mask, vector<vector<pair<Point2f,float>>>& outputPts);
+    pair<vector<Point3f>, int> getBoxPointsDepth(Mat depthMat, Mat rgb, Mat mask);
 
     bool setBackGround();
 
-    bool convertWorld2Ground(vector<vector<Point3f>> inputPts, vector<vector<Point3f> > &outputPts);
+    vector<Point3f> convertWorld2Ground(vector<Point3f> inputPts);
 
     Mat rotatedImage(Mat& inputImage);
 signals:
     void drawPoints(float *points, int size);
 
-    void test(float*,int);
-
+    void sendPoint(float* point);
 public slots:
 
 };

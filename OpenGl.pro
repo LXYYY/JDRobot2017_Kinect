@@ -22,7 +22,9 @@ SOURCES += main.cpp\
     globject.cpp \
     Communicate/SocketClass/SocketClass.cpp \
     Communicate/Communication.cpp \
-    Threads/Threads.cpp
+    Threads/Threads.cpp \
+    AprilTagsClass/AprilTagsClass.cpp \
+
 
 HEADERS  += mainwindow.h \
     oglwidget.h \
@@ -32,8 +34,8 @@ HEADERS  += mainwindow.h \
     globject.h \
     Communicate/SocketClass/SocketClass.h \
     Communicate/Communication.h \
-    opencvProc/cvProcesser.h \
     Threads/Threads.h
+    AprilTagsClass/AprilTagsClass.h
 
 
 FORMS    += mainwindow.ui \
@@ -41,6 +43,7 @@ FORMS    += mainwindow.ui \
 
 LIBS+=-L/usr/lib/x86_64-linux-gnu -lglut -lGLU\
       -L/usr/local/lib\
+        -lapriltags\
         -lopencv_calib3d\
         -lopencv_core\
         -lopencv_features2d\
@@ -63,12 +66,16 @@ LIBS+=-L/usr/lib/x86_64-linux-gnu -lglut -lGLU\
         -lopencv_xobjdetect\
         -lpthread\
         -L/root/freenect2/lib\
-        -lfreenect2
+        -lfreenect2\
 
-LIBS+=/usr/local/lib/libapriltags.a
+
+
+#LIBS+=
 
 INCLUDEPATH+=/usr/include/\
-        /root/freenect2/include/
+        /root/freenect2/include/\
+        /home/jdrobot/apriltags/build/include\
+        /usr/include/eigen3
 
 DISTFILES += \
     depends/debs/i965-va-driver_1.7.0-1_amd64.deb \
@@ -96,4 +103,6 @@ DISTFILES += \
     depends/install_libusb_vs2015.cmd \
     depends/LICENSES.txt \
     depends/make_release_msvc.cmd
+
+
 

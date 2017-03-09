@@ -521,6 +521,9 @@ bool MyThread::showFrames(){
         binaryMat=(foreGround/1000.f*255.f);
         binaryMat.convertTo(binaryMat,CV_8U);
         imshow("binary",binaryMat);
+        
+        vector<Point3f> pts2Draw;
+        
         if(mode==SEARCH_BOX){
             threshold(binaryMat,binaryMat,10,255,THRESH_BINARY);
             imshow("thresh",binaryMat);
@@ -532,7 +535,6 @@ bool MyThread::showFrames(){
             mask.create(foreGround.size(), CV_8UC1);
             pair<vector<Point3f>,int> tBoxPointsDepth;
             vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
-            vector<Point3f> pts2Draw;
 
             findContours(binaryMat, contours0, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
             for (int i = 0; i < contours0.size(); i++) {
@@ -631,22 +633,32 @@ bool MyThread::showFrames(){
             }
             /////////send box centers to communication thread end////////
 
-            /////////emit drawPoints signal/////////
-            npts=pts2Draw.size();
-            float points[npts*3];
-            for(int i=0;i<npts;i++){
-                points[i*3+0]=pts2Draw.at(i).x;
-                points[i*3+1]=pts2Draw.at(i).y;
-                points[i*3+2]=pts2Draw.at(i).z;
-                //            cout<<"test drawPoints:"<<points[i*3+0]<<","<<points[i*3+1]<<","<<points[i*3+2]<<endl;
-            }
-            emit drawPoints(points,npts);
+
         }
         else if(mode==SEARCH_CASE){
             threshold(binaryMat,binaryMat,thresh,255,THRESH_BINARY);
             imshow("thresh",binaryMat);
-
+            pair<vector<Point3f>,int> tBoxPointsDepth;
+            vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
+            Mat mask;
+            mask.create(depthMatUndistorted.size(),CV_8UC1);
+            mask.setTo(1);
+            tBoxPointsDepth=getBoxPointsDepth(depthMatUndistorted,rgbd,mask);
+            tBoxPoints3dW=getBoxPoints3d(tBoxPointsDepth.first);
+            tBoxPoints3dG=convertWorld2Ground(tBoxPoints3dW);
+            pts2Draw=tBoxPoints3dG;
         }
+        
+        /////////emit drawPoints signal/////////
+        npts=pts2Draw.size();
+        float points[npts*3];
+        for(int i=0;i<npts;i++){
+            points[i*3+0]=pts2Draw.at(i).x;
+            points[i*3+1]=pts2Draw.at(i).y;
+            points[i*3+2]=pts2Draw.at(i).z;
+            //            cout<<"test drawPoints:"<<points[i*3+0]<<","<<points[i*3+1]<<","<<points[i*3+2]<<endl;
+        }
+        emit drawPoints(points,npts);
         //        cout<<"pts2Draw.size="<<pts2Draw.size()<<endl;
         //        cout<<pts2Draw.at(100)<<endl;
         /////////emit drawPoints signal end/////////

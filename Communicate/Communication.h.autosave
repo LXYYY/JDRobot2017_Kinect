@@ -53,11 +53,16 @@ public:
 //    unsigned char frame[FrameLen];
     enum dataTypeE
     {
-        PointID=0,
-        PointX=1,
-        PointY=2,
-        PointZ=3,
-        nDataTypes=4
+        TgtBox=0,
+        TgtBoxDir,
+        TgtCase,
+        SetBackGnd,
+        SetBackGndEnd,
+        SetOrigin,
+        SetOriginEnd,
+        SearchBox,
+        SearchCase,
+        Pause
     };
 
     SocketClass socket;

@@ -85,11 +85,11 @@ void HOM_Print(HOM_MAT mat){
     for(int i=0;i<4;i++)
     {
 
-          qDebug("%f   %f   %f   %f",mat[i*4+0],mat[i*4+1],mat[i*4+2],mat[i*4+3]);
+//          qDebug("%f   %f   %f   %f",mat[i*4+0],mat[i*4+1],mat[i*4+2],mat[i*4+3]);
 
     }
 
-        qDebug("---------------------");
+//        qDebug("---------------------");
 }
 
 float input[3];
@@ -251,7 +251,7 @@ void OGLWidget::paintGL()
 
     emit update_mat_info(mat_aftercodtrans,0);
 
-    qDebug("mat_aftercod");
+//    qDebug("mat_aftercod");
 
     //HOM_Print(mat_aftercodtrans);
 
@@ -439,7 +439,7 @@ void OGLWidget:: TimeBasedPaint(){
     USB_trans.Servo_Motor_Yaw_Angle = (joint4.rotate_z/360.f)*2000.f+500;
     serial->write((char*)&USB_trans,sizeof(USB_Trans_TypeDef));
 
-    qDebug("TransMit");
+//    qDebug("TransMit");
 
     }
 
