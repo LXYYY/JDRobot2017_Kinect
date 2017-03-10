@@ -9,18 +9,17 @@ Communication::Communication() {
 Communication::~Communication() {
 }
 
-bool Communication::setFrame(unsigned char id, float x, float y, float z,float dirX,float Y, unsigned char color) {
+bool Communication::setFrame(unsigned char id, float x, float y, float z,float dirX,float dirY, unsigned char color) {
     frame.Head1 = HEAD1;
     frame.Head2 = HEAD2;
     frame.Id = id;
     frame.x=x;
     frame.y=y;
     frame.z=z;
-    frame.dirX=dirX;
-    frame.dirY=dirY;
+    frame.dir=atan(dirY/dirX);
     frame.color=color;
-    frame.Tail1=TAIL1;
-    frame.Tail2=TAIL2;
+//    frame.Tail1=TAIL1;
+//    frame.Tail2=TAIL2;
     return true;
 }
 

@@ -36,7 +36,7 @@ public:
         SEARCH_CASE=1,
         PAUSE=2
     };
-    enum ModeE mode=SEARCH_CASE;
+    enum ModeE mode=SEARCH_BOX;
     AprilTagsClass aprilTags;
     libfreenect2::Freenect2Device::IrCameraParams irParams;
     libfreenect2::Freenect2Device::ColorCameraParams colorParams;
@@ -71,10 +71,11 @@ public:
     vector<struct BoxS> boxes;
     int npts;
     vector<Point3f> groundPts;
-    Mat R2G,T2G,T2O;
+    Mat_<double> R2G,T2G,T2O;
     Mat rotationMat;
     bool rotationMatInited=false;
     bool ifBackGoundSet=false;
+    bool ifOriginSet=false;
     bool stop ;
     explicit MyThread(QObject *parent = 0);
     void run();

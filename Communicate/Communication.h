@@ -22,7 +22,7 @@ private:
         float value;
     } BitConverter;
 
-    bool setFrame(unsigned char id, float x,float y,float z,float dirX,float dirY,int color);
+    bool setFrame(unsigned char id, float x,float y,float z,float dirX,float dirY,unsigned char color);
 
     bool sendMsg(unsigned char* msg);
 
@@ -34,14 +34,13 @@ public:
         unsigned char Head1;
         unsigned char Head2;
         unsigned char Id;
-        unsigned char color;
         float x;
         float y;
         float z;
-        float dirX;
-        float dirY;
-        unsigned char Tail1;
-        unsigned char Tail2;
+        float dir;
+        unsigned char color;
+//        unsigned char Tail1;
+//        unsigned char Tail2;
     }  __attribute__((packed)) frame;
 
     enum FrameStructE {
