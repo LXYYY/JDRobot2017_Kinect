@@ -10,7 +10,8 @@ using namespace cv;
 
 #define HEAD1 0x01
 #define HEAD2 0x02
-#define TAIL 0x55
+#define TAIL1 0x55
+#define TAIL2 0x54
 
 class Communication : public QThread {
     Q_OBJECT
@@ -21,7 +22,7 @@ private:
         float value;
     } BitConverter;
 
-    bool setFrame(unsigned char id, float x,float y,float z);
+    bool setFrame(unsigned char id, float x,float y,float z,float dirX,float dirY,int color);
 
     bool sendMsg(unsigned char* msg);
 
@@ -33,9 +34,14 @@ public:
         unsigned char Head1;
         unsigned char Head2;
         unsigned char Id;
+        unsigned char color;
         float x;
         float y;
         float z;
+        float dirX;
+        float dirY;
+        unsigned char Tail1;
+        unsigned char Tail2;
     }  __attribute__((packed)) frame;
 
     enum FrameStructE {
@@ -53,11 +59,20 @@ public:
 //    unsigned char frame[FrameLen];
     enum dataTypeE
     {
-        PointID=0,
-        PointX=1,
-        PointY=2,
-        PointZ=3,
-        nDataTypes=4
+        TgtBox=0,
+        TgtBoxDir,
+        TgtCase,
+
+        SetBackGnd,
+        SetBackGndEnd,
+        SetOrigin,
+        SetOriginEnd,
+        InitCases,
+        InitCasesEnd,
+        SearchBox,
+        SearchCase,
+        Pause,
+        nDataTypes
     };
 
     SocketClass socket;
@@ -73,10 +88,12 @@ public:
 
     bool connect(void);
 
-    bool sendFrame(unsigned char id, float x,float y,float z);
+    bool sendFrame(unsigned char id, float x,float y,float z,float dirX,float dirY,unsigned char color);
+
+    bool receiveMsg(unsigned char* buff,int buff_len);
 
     void FrameAnalysis(unsigned char buff[],int buff_len);
 
 public slots:
-    void sendPoint(float* point);
+    void sendPoint(unsigned char id, float* point);
 };

@@ -9,13 +9,18 @@ Communication::Communication() {
 Communication::~Communication() {
 }
 
-bool Communication::setFrame(unsigned char id, float x,float y,float z) {
+bool Communication::setFrame(unsigned char id, float x, float y, float z,float dirX,float Y, unsigned char color) {
     frame.Head1 = HEAD1;
     frame.Head2 = HEAD2;
     frame.Id = id;
     frame.x=x;
     frame.y=y;
     frame.z=z;
+    frame.dirX=dirX;
+    frame.dirY=dirY;
+    frame.color=color;
+    frame.Tail1=TAIL1;
+    frame.Tail2=TAIL2;
     return true;
 }
 
@@ -30,7 +35,7 @@ void Communication::FrameAnalysis(unsigned char buff[], int buff_len) {
 
         if (frame_fifo[Head1] == HEAD1
             && frame_fifo[Head2] == HEAD2
-            && frame_fifo[Tail] == TAIL) {
+            && frame_fifo[Tail] == TAIL1) {
             unsigned char id = frame_fifo[dataType];
             BitConverter.byte[0] = frame_fifo[data0];
             BitConverter.byte[1] = frame_fifo[data1];
@@ -50,8 +55,8 @@ bool Communication::sendMsg(unsigned char* msg) {
     return false;
 }
 
-bool Communication::sendFrame(unsigned char id, float x,float y,float z) {
-    setFrame(id, x,y,z);
+bool Communication::sendFrame(unsigned char id, float x,float y,float z,float dirX,float dirY,unsigned char color) {
+    setFrame(id, x,y,z,dirX,dirY,color);
     if (sendMsg((unsigned char*)&frame)) {
         return true;
     } ///发送
@@ -70,6 +75,10 @@ void Communication::run(){
     connect();
 }
 
-void Communication::sendPoint(float *point){
-    sendFrame(0,point[0],point[1],point[2]);
+void Communication::sendPoint(unsigned char id, float* point){
+    sendFrame(id,point[0],point[1],point[2],point[3],point[4],point[5]);
+}
+
+bool receiveMsg(unsigned char* buff,int buff_len){
+
 }

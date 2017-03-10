@@ -59,6 +59,15 @@ public:
         vector<Point3f> boxPoints3dG;
         vector<Point3f> boxPointsDepth;
     };
+
+    struct CaseS{
+        int color;
+        int ptId;   //0:left top 1:center 2:right top
+        Point3f point;
+        Point2f dir=Point(0,0);
+    };
+
+    vector<struct CaseS> cases;
     vector<struct BoxS> boxes;
     int npts;
     vector<Point3f> groundPts;
@@ -79,18 +88,21 @@ public:
     void init(libfreenect2::Freenect2Device *dev);
 
     vector<Point3f> getBoxPoints3d(vector<Point3f> inputPts) ;
+    Point3f getBoxPoints3d(Point3f inputPts) ;
 
     pair<vector<Point3f>, int> getBoxPointsDepth(Mat depthMat, Mat rgb, Mat mask);
+    Point3f getBoxPointsDepth(Mat depthMat, Point2f pts);
 
     bool setBackGround();
 
     vector<Point3f> convertWorld2Ground(vector<Point3f> inputPts);
+    Point3f convertWorld2Ground(Point3f inputPts);
 
     Mat rotatedImage(Mat& inputImage);
 signals:
     void drawPoints(float *points, int size);
 
-    void sendPoint(float* point);
+    void sendPoint(unsigned char id,float* point);
 public slots:
 
 };

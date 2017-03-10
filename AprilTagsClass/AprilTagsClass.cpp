@@ -60,10 +60,9 @@ bool AprilTagsClass::processImage(Mat image) {
     cv::cvtColor(image, image_gray, CV_BGR2GRAY);
     vector<AprilTags::TagDetection> detections;
     detections = m_tagDetector->extractTags(image_gray);
-    for(int i=0;i<detections.size();i++){
-        if(detections.at(i).id==0){
+    for(size_t i=0;i<detections.size();i++){
+        if(detections.at(i).good)
             tags.push_back(detections.at(i));
-        }
     }
     return false;
 }

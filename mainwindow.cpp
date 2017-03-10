@@ -102,7 +102,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     myThread= new MyThread();
     communicator =new Communication();
-    connect(myThread,SIGNAL(sendPoint(float*)),communicator,SLOT(sendPoint(float*)));
+    connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
     //connect(myThread,SIGNAL(drawPoints(float*,size_t)),this,SLOT(draw1Point(float*,size_t)));
     connect(myThread,SIGNAL(drawPoints(float*,int)),this,SLOT(draw1Point(float*,int)));
     myThread->start();

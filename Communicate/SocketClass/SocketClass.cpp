@@ -43,3 +43,4 @@ bool SocketClass::sendMsg(unsigned char *frame,size_t len) {
     } ///发送
     return false;
 }
+
