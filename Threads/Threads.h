@@ -94,7 +94,6 @@ public:
     pair<vector<Point3f>, int> getBoxPointsDepth(Mat depthMat, Mat rgb, Mat mask);
     Point3f getBoxPointsDepth(Mat depthMat, Point2f pts);
 
-    bool setBackGround();
 
     vector<Point3f> convertWorld2Ground(vector<Point3f> inputPts);
     Point3f convertWorld2Ground(Point3f inputPts);
@@ -104,7 +103,10 @@ signals:
     void drawPoints(float *points, int size);
 
     void sendPoint(unsigned char id,float* point);
-public slots:
 
+    void drawRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void drawDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+public slots:
+    bool setBackGround();
 };
 #endif //JDROBOT_THREADS_H

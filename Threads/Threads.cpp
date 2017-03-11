@@ -414,8 +414,12 @@ void MyThread::run()
 
 
 
-
-    kinect();
+    try{
+        kinect();
+    }
+    catch(...){
+        perror("kinect");
+    }
 }
 
 //void *CommunicateThread(void *arg) {
@@ -485,274 +489,291 @@ bool MyThread::getFrames(libfreenect2::Frame *rgb, libfreenect2::Frame *ir, libf
 }
 int thresh=-1;
 bool MyThread::showFrames(){
-    boxes.clear();
-    Mat rgbdCopy;
-    rgbd.copyTo(rgbdCopy);
-    if(ifBackGoundSet&&!ifOriginSet){
-        aprilTags.processImage(rgbdCopy);
-        aprilTags.drawTags(rgbdCopy);
-        cout<<"test"<<endl;
-    }
-    else if(ifBackGoundSet){
-
-        line(rgbdCopy,Point(groundPts.at(1).x,groundPts.at(1).y),
-             Point(groundPts.at(0).x,groundPts.at(0).y),Scalar(0,0,255));
-        line(rgbdCopy,Point(groundPts.at(2).x,groundPts.at(2).y),
-             Point(groundPts.at(0).x,groundPts.at(0).y),Scalar(0,0,255));
-        Point3f vZ=Point3f(R2G.col(2).at<double>(0),R2G.col(2).at<double>(1),R2G.col(2).at<double>(2));
-        Point2f z;
-        z.x=vZ.x*irParams.fx/vZ.z+irParams.cx;
-        z.y=vZ.y*irParams.fy/vZ.z+irParams.cy;
-        z=-z*100+Point2f(groundPts.at(0).x,groundPts.at(0).y);
-        line(rgbdCopy,z, Point(groundPts.at(0).x,groundPts.at(0).y),Scalar(255,0,0));
-        cv::imshow("registered", rgbdCopy);
-        foreGround = (backGround - depthMatUndistorted);
-        imshow("background", backGround / 1024.f);
-        imshow("foregound", foreGround / 1024.f);
-
-        Mat binaryMat;
-        binaryMat=(foreGround/1000.f*255.f);
-        binaryMat.convertTo(binaryMat,CV_8U);
-        imshow("binary",binaryMat);
-
-        vector<Point3f> pts2Draw;
-
-        if(mode==SEARCH_BOX){
-            //            cout<<"testing"<<endl;
-            threshold(binaryMat,binaryMat,10,255,THRESH_BINARY);
-            imshow("thresh",binaryMat);
-
-            vector<Vec4i> hierarchy;
-            vector<vector<Point> > contours0;
-
-            Mat mask;
-            mask.create(foreGround.size(), CV_8UC1);
-            pair<vector<Point3f>,int> tBoxPointsDepth;
-            vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
-
-            findContours(binaryMat, contours0, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
-            for (int i = 0; i < contours0.size(); i++) {
-                if (contourArea(contours0.at(i)) >= 5000) {
-
-                    /////////make a mask//////////
-                    mask.setTo(0);
-                    drawContours(mask, contours0, i, Scalar(255), -1);
-                    drawContours(mask, contours0, i, Scalar(0), 5);
-                    /////////make a mask end//////////
-
-                    ////////get points and color///////
-                    tBoxPointsDepth=getBoxPointsDepth(depthMatUndistorted,rgbd, mask);
-                    tBoxPoints3dW=getBoxPoints3d(tBoxPointsDepth.first);
-                    tBoxPoints3dG=convertWorld2Ground(tBoxPoints3dW);
-                    //                tBoxPoints3dG=tBoxPoints3dW;
-                    ////////get points and color end///////
-
-
-                    ///////push a new box///////////
-                    struct BoxS tBox;
-                    tBox.boxPointsDepth=tBoxPointsDepth.first;
-                    tBox.boxPoints3dW=tBoxPoints3dW;
-                    tBox.boxPoints3dG=tBoxPoints3dG;
-
-                    vector<Point2f> proj2ZPts;
-                    proj2ZPts.clear();
-                    float z=0;
-                    for(int j=0;j<tBoxPoints3dG.size();j++){
-
-                        //////push back points to draw///////////
-                        pts2Draw.push_back(tBoxPoints3dG.at(j));
-                        //////push back points to draw end///////////
-
-                        proj2ZPts.push_back(Point2f
-                                            (tBoxPoints3dG.at(j).x,
-                                             tBoxPoints3dG.at(j).y));
-                        //                    cout<<"check z:"<<tBoxPoints3dG.at(j).z<<endl;
-
-                        z+=tBoxPoints3dG.at(i).z;
-                    }
-                    z/=tBoxPoints3dG.size();
-                    RotatedRect boundingBox=minAreaRect(proj2ZPts);
-
-                    boundingBox.points(tBox.pts);
-                    tBox.size=boundingBox.size;
-                    tBox.center=boundingBox.center;
-                    tBox.color=tBoxPointsDepth.second;
-                    tBox.z=z;
-                    cout<<"center:"<<center<<","<<z<<endl;
-
-                    if(fabs((tBox.pts[0].x-tBox.pts[1].x)*(tBox.pts[0].x-tBox.pts[1].x)+(tBox.pts[0].y-tBox.pts[1].y)*(tBox.pts[0].y-tBox.pts[1].y))>
-                            fabs((tBox.pts[1].x-tBox.pts[2].x)*(tBox.pts[1].x-tBox.pts[2].x)+(tBox.pts[1].y-tBox.pts[2].y)*(tBox.pts[1].y-tBox.pts[2].y))){
-                        tBox.dir=(tBox.pts[0]-tBox.pts[1]).y<=0?(tBox.pts[0]-tBox.pts[1]):(tBox.pts[1]-tBox.pts[0]);
-                    }
-                    else {
-                        tBox.dir=(tBox.pts[1]-tBox.pts[2]).y<=0?(tBox.pts[1]-tBox.pts[2]):(tBox.pts[2]-tBox.pts[1]);
-                    }
-
-                    boxes.push_back(tBox);
-                    ///////push a new box end///////////
-                }
-            }
-
-            /////////make a image to check//////////
-            Mat check(Size(1000,1000),CV_8UC3);
-            check.setTo(0);
-            for(int i=0;i<boxes.size();i++){
-                Scalar color;
-                switch(boxes.at(i).color){
-                case Green:
-                    color=Scalar(0,255,0);
-                    break;
-                case Blue:
-                    color=Scalar(255,0,0);
-                    break;
-                case Yellow:
-                    color=Scalar(0,255,255);
-                    break;
-                }
-                for(int j=0;j<4;j++){
-                    line(check,boxes.at(i).pts[j]+Point2f(500,500),boxes.at(i).pts[(j+1)%4]+Point2f(500,500),color);
-                }
-                line(check,boxes.at(i).center+Point2f(500,500),boxes.at(i).center+Point2f(500,500)+boxes.at(i).dir,color);
-                cout<<"box center:"<<boxes.at(i).center<<endl;
-            }
-            imshow("check",check);
-            /////////make a image to check end//////////
-
-            /////////send box centers to communication thread////////
-            if(boxes.size()>0){
-                int tgtId;
-                float minX=10000,minY=10000;
-                for(size_t i=0;i<boxes.size();i++){
-                    if(fabs(boxes.at(i).center.x)<minX){
-                        minX=fabs(boxes.at(i).center.x);
-                        tgtId=i;
-                    }
-                }
-                float point[6];
-                point[0]=boxes.at(tgtId).center.x;
-                point[1]=boxes.at(tgtId).center.y;
-                point[2]=boxes.at(tgtId).z;
-                point[3]=boxes.at(tgtId).dir.x;
-                point[4]=boxes.at(tgtId).dir.y;
-                point[5]=boxes.at(tgtId).color;
-                emit sendPoint(Communication::TgtBox,point);
-            }
-            /////////send box centers to communication thread end////////
-
-
-        }
-        else if(mode==SEARCH_CASE){
-            aprilTags.processImage(rgbd);
+    try{
+        boxes.clear();
+        Mat rgbdCopy;
+        rgbd.copyTo(rgbdCopy);
+//        cout<<"test:"<<ifBackGoundSet<<","<<ifOriginSet<<endl;
+        if(ifBackGoundSet&&!ifOriginSet){
+            aprilTags.processImage(rgbdCopy);
             aprilTags.drawTags(rgbdCopy);
+            //        cout<<"test"<<endl;
+        }
+        if(ifBackGoundSet){
+//            cout<<"fuck1"<<endl;
+            line(rgbdCopy,Point(groundPts.at(1).x,groundPts.at(1).y),
+                 Point(groundPts.at(0).x,groundPts.at(0).y),Scalar(0,0,255));
+            line(rgbdCopy,Point(groundPts.at(2).x,groundPts.at(2).y),
+                 Point(groundPts.at(0).x,groundPts.at(0).y),Scalar(0,0,255));
+            Point3f vZ=Point3f(R2G.col(2).at<double>(0),R2G.col(2).at<double>(1),R2G.col(2).at<double>(2));
+            Point2f z;
+            z.x=vZ.x*irParams.fx/vZ.z+irParams.cx;
+            z.y=vZ.y*irParams.fy/vZ.z+irParams.cy;
+            z=-z*100+Point2f(groundPts.at(0).x,groundPts.at(0).y);
+            line(rgbdCopy,z, Point(groundPts.at(0).x,groundPts.at(0).y),Scalar(255,0,0));
+//            cv::imshow("registered", rgbdCopy);
+            foreGround = (backGround - depthMatUndistorted);
+////            imshow("background", backGround / 1024.f);
+////            imshow("foregound", foreGround / 1024.f);
 
-            vector<Point2f> tCasePts;
-            vector<Point3f> tCasePtsDepth;
-            for(size_t i=0;i<aprilTags.tags.size();i++){
+            Mat binaryMat;
+            binaryMat=(foreGround/1000.f*255.f);
+            binaryMat.convertTo(binaryMat,CV_8U);
+            GaussianBlur(binaryMat,binaryMat,Size(3,3),0);
+////            imshow("binary",binaryMat);
 
-                if(aprilTags.tags.at(i).id==1
-                        ||aprilTags.tags.at(i).id==2
-                        ||aprilTags.tags.at(i).id==3){
-                    Point3f pt=getBoxPointsDepth(depthMatUndistorted,Point2f(aprilTags.tags.at(i).cxy.first,aprilTags.tags.at(i).cxy.second));
-                    Point3f ptW=getBoxPoints3d(pt);
-                    Point3f ptG=convertWorld2Ground(ptW);
+            vector<Point3f> pts2Draw;
 
-                    float point[6];
-                    point[0]=ptG.x;
-                    point[1]=ptG.y;
-                    point[2]=280;
-                    point[3]=0;
-                    point[4]=0;
-                    point[5]=aprilTags.tags.at(i).id;
+            if(mode==SEARCH_BOX){
+                cout<<"fuck2"<<endl;
 
-                    if(fabs(ptG.x)<10){
-                        Point3f p2=getBoxPointsDepth(depthMatUndistorted,Point2f(aprilTags.tags.at(i).p[2].first,aprilTags.tags.at(i).p[2].second));
-                        Point3f p2W=getBoxPoints3d(p2);
-                        Point3f p2G=convertWorld2Ground(p2W);
+                //            cout<<"testing"<<endl;
+                threshold(binaryMat,binaryMat,10,255,THRESH_BINARY);
 
-                        Point3f p3=getBoxPointsDepth(depthMatUndistorted,Point2f(aprilTags.tags.at(i).p[3].first,aprilTags.tags.at(i).p[3].second));
-                        Point3f p3W=getBoxPoints3d(p3);
-                        Point3f p3G=convertWorld2Ground(p3W);
+                vector<Vec4i> hierarchy;
+                vector<vector<Point> > contours0;
 
-                        Point3f dir=p2G.cross(p3G);
-                        point[3]=dir.x;
-                        point[4]=dir.y;
-                        cout<<"dir:"<<dir<<endl;
+                Mat mask;
+                mask.create(foreGround.size(), CV_8UC1);
+                pair<vector<Point3f>,int> tBoxPointsDepth;
+                vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
+
+                findContours(binaryMat, contours0, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
+                cvtColor(binaryMat,binaryMat,COLOR_GRAY2BGR);
+                drawContours(binaryMat,contours0,-1,Scalar(0,0,255));
+//                imshow("thresh",binaryMat);
+                cout<<"contours.size():"<<contours0.size()<<endl;
+                for (int i = 0; i < contours0.size(); i++) {
+                    if (contourArea(contours0.at(i)) >= 5000) {
+//                        vector<int> convex;
+//                        vector<Vec4i> convexity;
+//                        convexHull(contours0.at(i),convex,false,false);
+//                        cout<<"isContourConvex:"<<isContourConvex(contours0.at(i))<<endl;
+//                        if(!isContourConvex(contours0.at(i))){
+//                            convexityDefects(contours0.at(i),convex,convexity);
+//                            int idMax=-1;
+//                            int max=0;
+//                            for(size_t j=0;j<convexity.size();j++){
+//                                if(convexity.at(j)[3]>max){
+//                                    max=convexity.at(j)[3];
+//                                    idMax=j;
+//                                }
+//                            }
+//                            int idMin=-1;
+//                            int scdMax=0;
+//                            for(size_t j=0;j<convexity.size();j++){
+//                                if(convexity.at(j)[3]>scdMax&&j!=idMax){
+//                                    scdMax=convexity.at(j)[3];
+//                                    idMin=j;
+//                                }
+//                            }
+//                            vector<Point> box1,box2;
+//                            box1.insert(box1.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]));
+//                            box2.insert(box2.begin(),contours0.at(i).begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]));
+//                            box2.insert(box2.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]),contours0.at(i).end());
+//                            contours0.push_back(box1);
+//                            contours0.push_back(box2);
+//                            continue;
+//                        }
+                        /////////make a mask//////////
+                        mask.setTo(0);
+                        drawContours(mask, contours0, i, Scalar(255), -1);
+                        drawContours(mask, contours0, i, Scalar(0), 5);
+//                        /////////make a mask end//////////
+
+                        ////////get points and color///////
+                        tBoxPointsDepth=getBoxPointsDepth(depthMatUndistorted,rgbd, mask);
+                        tBoxPoints3dW=getBoxPoints3d(tBoxPointsDepth.first);
+                        tBoxPoints3dG=convertWorld2Ground(tBoxPoints3dW);
+                        //                tBoxPoints3dG=tBoxPoints3dW;
+                        ////////get points and color end///////
+
+
+                        ///////push a new box///////////
+                        struct BoxS tBox;
+                        tBox.boxPointsDepth=tBoxPointsDepth.first;
+                        tBox.boxPoints3dW=tBoxPoints3dW;
+                        tBox.boxPoints3dG=tBoxPoints3dG;
+
+                        vector<Point2f> proj2ZPts;
+                        proj2ZPts.clear();
+                        float z=0;
+                        for(int j=0;j<tBoxPoints3dG.size();j++){
+
+                            //////push back points to draw///////////
+                            pts2Draw.push_back(tBoxPoints3dG.at(j));
+                            //////push back points to draw end///////////
+
+                            proj2ZPts.push_back(Point2f
+                                                (tBoxPoints3dG.at(j).x,
+                                                 tBoxPoints3dG.at(j).y));
+                            //                    cout<<"check z:"<<tBoxPoints3dG.at(j).z<<endl;
+
+                            z+=tBoxPoints3dG.at(i).z;
+                        }
+                        z/=tBoxPoints3dG.size();
+                        RotatedRect boundingBox=minAreaRect(proj2ZPts);
+
+                        boundingBox.points(tBox.pts);
+                        tBox.size=boundingBox.size;
+                        tBox.center=boundingBox.center;
+                        tBox.color=tBoxPointsDepth.second;
+                        tBox.z=z;
+//                        cout<<"center:"<<center<<","<<z<<endl;
+
+                        if(fabs((tBox.pts[0].x-tBox.pts[1].x)*(tBox.pts[0].x-tBox.pts[1].x)+(tBox.pts[0].y-tBox.pts[1].y)*(tBox.pts[0].y-tBox.pts[1].y))>
+                                fabs((tBox.pts[1].x-tBox.pts[2].x)*(tBox.pts[1].x-tBox.pts[2].x)+(tBox.pts[1].y-tBox.pts[2].y)*(tBox.pts[1].y-tBox.pts[2].y))){
+                            tBox.dir=(tBox.pts[0]-tBox.pts[1]).y<=0?(tBox.pts[0]-tBox.pts[1]):(tBox.pts[1]-tBox.pts[0]);
+                        }
+                        else {
+                            tBox.dir=(tBox.pts[1]-tBox.pts[2]).y<=0?(tBox.pts[1]-tBox.pts[2]):(tBox.pts[2]-tBox.pts[1]);
+                        }
+
+                        boxes.push_back(tBox);
+                        ///////push a new box end///////////
                     }
-                    cout<<"center:"<<ptG<<endl;
-                    emit sendPoint(Communication::TgtCase,point);
                 }
+                cout<<"fuck3"<<endl;
+                ///////make a image to check//////////
+//                Mat check(Size(1000,1000),CV_8UC3);
+//                check.setTo(0);
+//                for(int i=0;i<boxes.size();i++){
+//                    Scalar color;
+//                    switch(boxes.at(i).color){
+//                    case Green:
+//                        color=Scalar(0,255,0);
+//                        break;
+//                    case Blue:
+//                        color=Scalar(255,0,0);
+//                        break;
+//                    case Yellow:
+//                        color=Scalar(0,255,255);
+//                        break;
+//                    }
+//                    for(int j=0;j<4;j++){
+//                        line(check,boxes.at(i).pts[j]+Point2f(500,500),boxes.at(i).pts[(j+1)%4]+Point2f(500,500),color);
+//                    }
+//                    line(check,boxes.at(i).center+Point2f(500,500),boxes.at(i).center+Point2f(500,500)+boxes.at(i).dir,color);
+////                    cout<<"box center:"<<boxes.at(i).center<<endl;
+//                }
+//                imshow("check",check);
+                ///////make a image to check end//////////
+
+                ///////send box centers to communication thread////////
+                if(boxes.size()>0){
+                    int tgtId;
+                    float minX=1000000,minY=1000000;
+                    for(size_t i=0;i<boxes.size();i++){
+                        if(fabs(boxes.at(i).center.x)<minX){
+                            minX=fabs(boxes.at(i).center.x);
+                            tgtId=i;
+                        }
+                    }
+                    float point[6];
+                    point[0]=boxes.at(tgtId).center.x;
+                    point[1]=boxes.at(tgtId).center.y;
+                    point[2]=boxes.at(tgtId).z;
+                    point[3]=boxes.at(tgtId).dir.x;
+                    point[4]=boxes.at(tgtId).dir.y;
+                    point[5]=boxes.at(tgtId).color;
+                    emit sendPoint(Communication::TgtBox,point);
+                }
+                /////////send box centers to communication thread end////////
+            }
+            else if(mode==SEARCH_CASE){
+                aprilTags.processImage(rgbd);
+                aprilTags.drawTags(rgbdCopy);
+
+//                vector<Point2f> tCasePts;
+//                vector<Point3f> tCasePtsDepth;
+//                for(size_t i=0;i<aprilTags.tags.size();i++){
+
+//                    if(aprilTags.tags.at(i).id==1
+//                            ||aprilTags.tags.at(i).id==2
+//                            ||aprilTags.tags.at(i).id==3){
+//                        Point3f pt=getBoxPointsDepth(depthMatUndistorted,Point2f(aprilTags.tags.at(i).cxy.first,aprilTags.tags.at(i).cxy.second));
+//                        Point3f ptW=getBoxPoints3d(pt);
+//                        Point3f ptG=convertWorld2Ground(ptW);
+
+//                        float point[6];
+//                        point[0]=ptG.x;
+//                        point[1]=ptG.y;
+//                        point[2]=280;
+//                        point[3]=0;
+//                        point[4]=0;
+//                        point[5]=aprilTags.tags.at(i).id;
+
+//                        if(fabs(ptG.x)<10){
+//                            Point3f p2=getBoxPointsDepth(depthMatUndistorted,Point2f(aprilTags.tags.at(i).p[2].first,aprilTags.tags.at(i).p[2].second));
+//                            Point3f p2W=getBoxPoints3d(p2);
+//                            Point3f p2G=convertWorld2Ground(p2W);
+
+//                            Point3f p3=getBoxPointsDepth(depthMatUndistorted,Point2f(aprilTags.tags.at(i).p[3].first,aprilTags.tags.at(i).p[3].second));
+//                            Point3f p3W=getBoxPoints3d(p3);
+//                            Point3f p3G=convertWorld2Ground(p3W);
+
+//                            Point3f dir=p2G.cross(p3G);
+//                            point[3]=dir.x;
+//                            point[4]=dir.y;
+//                            cout<<"dir:"<<dir<<endl;
+//                        }
+//                        cout<<"center:"<<ptG<<endl;
+//                        emit sendPoint(Communication::TgtCase,point);
+//                    }
+//                }
+
+
             }
 
-            //            bool detected[3];
-            //            for(size_t i=0;i<cases.size();i++){
-            //                if(cases.at(i).color==1
-            //                        ||cases.at(i).color==2
-            //                        ||cases.at(i).color==3){
-            //                    if(cases.at(i).dir.x!=Point2f(0,0))
-            //                        detected[cases.at(i).color-1]=true;
-            //                }
-            //            }
-            //            if(detected[0]&&detected[1]&&detected[2]){
-            //                float tPt[3]={0,0,0,0,0,0};
-            //                emit sendPoint(Communication::InitCasesEnd,tPt);
-            //            }
-
-
-            //            threshold(binaryMat,binaryMat,thresh,255,THRESH_BINARY);
-            //            imshow("thresh",binaryMat);
-            //            pair<vector<Point3f>,int> tBoxPointsDepth;
-            //            vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
-            //            Mat mask;
-            //            mask.create(depthMatUndistorted.size(),CV_8UC1);
-            //            mask.setTo(1);
-            //            tBoxPointsDepth=getBoxPointsDepth(depthMatUndistorted,rgbd,mask);
-            //            tBoxPoints3dW=getBoxPoints3d(tBoxPointsDepth.first);
-            //            tBoxPoints3dG=convertWorld2Ground(tBoxPoints3dW);
-
-            //            Mat proj(Size(700,700),CV_8UC1);
-            //            proj.setTo(0);
-            //            if(thresh>0){
-            //                for(size_t i=0;i<tBoxPoints3dG.size();i++){
-            //                    if(fabs(tBoxPoints3dG.at(i).z-(thresh))<50){
-            //                        pts2Draw.push_back(tBoxPoints3dG.at(i));
-            //                        circle(proj,Point(tBoxPoints3dG.at(i).x+proj.cols/2,-tBoxPoints3dG.at(i).y+proj.rows/2),3,Scalar(255),-1);
-            //                    }
-            //                }
-            //            }
-            //            else
-            //                pts2Draw=tBoxPoints3dG;
-
-            //            imshow("proj",proj);
-
+            /////////emit drawPoints signal/////////
+            npts=pts2Draw.size();
+            float points[npts*3];
+            for(int i=0;i<npts;i++){
+                points[i*3+0]=pts2Draw.at(i).x;
+                points[i*3+1]=pts2Draw.at(i).y;
+                points[i*3+2]=pts2Draw.at(i).z;
+                //            cout<<"test drawPoints:"<<points[i*3+0]<<","<<points[i*3+1]<<","<<points[i*3+2]<<endl;
+            }
+            emit drawPoints(points,npts);
+            //        cout<<"pts2Draw.size="<<pts2Draw.size()<<endl;
+            //        cout<<pts2Draw.at(100)<<endl;
+            /////////emit drawPoints signal end/////////
         }
 
-        /////////emit drawPoints signal/////////
-        npts=pts2Draw.size();
-        float points[npts*3];
-        for(int i=0;i<npts;i++){
-            points[i*3+0]=pts2Draw.at(i).x;
-            points[i*3+1]=pts2Draw.at(i).y;
-            points[i*3+2]=pts2Draw.at(i).z;
-            //            cout<<"test drawPoints:"<<points[i*3+0]<<","<<points[i*3+1]<<","<<points[i*3+2]<<endl;
-        }
-        emit drawPoints(points,npts);
-        //        cout<<"pts2Draw.size="<<pts2Draw.size()<<endl;
-        //        cout<<pts2Draw.at(100)<<endl;
-        /////////emit drawPoints signal end/////////
+
+
+
+//        cvtColor(depthMatUndistorted,depthMatUndistorted,COLOR_GRAY2BGR);
+//        cout<<"size:"<<depthMatUndistorted.cols<<","<<depthMatUndistorted.rows<<endl;
+//        cout<<"rgbd:"<<rgbdCopy.cols<<","<<rgbdCopy.rows<<endl;
+        cout<<"drawing"<<endl;
+        Mat tDepth;
+        tDepth=(depthMatUndistorted/1000.f*255.f);
+        tDepth.convertTo(tDepth,CV_8U);
+        cout<<"rgbdCopy:"<<rgbdCopy.rows<<","<<rgbdCopy.cols<<endl;\
+        cout<<"depth:"<<tDepth.rows<<","<<tDepth.cols<<endl;
+        emit drawRgbd(rgbdCopy.data,rgbdCopy.cols,rgbdCopy.rows,rgbdCopy.cols*rgbdCopy.channels());
+        emit drawDepth(tDepth.data,tDepth.cols,tDepth.rows,tDepth.cols*tDepth.channels());
+
+//        cv::imshow("rgb", rgbMat);
+//        cv::imshow("ir", irMat / 4096.0f);
+//        cv::imshow("depth", depthMat / 4096.0f);
+//        cv::imshow("undistorted", depthMatUndistorted / 1024.f);
+//        cv::imshow("registered", rgbdCopy);
+//        usleep(1000);
+//        char c=waitKey(1);
+//        if(c=='g') setBackGround();
+        return false;
     }
-    cv::imshow("rgb", rgbMat);
-    cv::imshow("ir", irMat / 4096.0f);
-    cv::imshow("depth", depthMat / 4096.0f);
-    cv::imshow("undistorted", depthMatUndistorted / 1024.f);
-    cv::imshow("registered", rgbdCopy);
-    usleep(1000);
-    return false;
+    catch(...){
+        perror("showFrames");
+    }
 }
 
 void MyThread::init(libfreenect2::Freenect2Device *dev) {
-    namedWindow("undistorted");
-    setMouseCallback("undistorted", OnMouseAction, &depthMatUndistorted);
-    createTrackbar("threash","undistorted", &thresh,300);
+//    namedWindow("undistorted");
+//    setMouseCallback("undistorted", OnMouseAction, &depthMatUndistorted);
+//    createTrackbar("threash","undistorted", &thresh,300);
     T2O=Mat_<double>(3,1)<<0,0,0;
     irParams = dev->getIrCameraParams();
 }
@@ -789,39 +810,44 @@ Point3f MyThread::getBoxPoints3d(Point3f inputPts){
 }
 
 pair<vector<Point3f>, int> MyThread::getBoxPointsDepth(Mat depthMat,Mat rgb, Mat mask) {
-    vector<Point3f> points;
-    points.clear();
-    long r=0,g=0,b=0;
-    for (size_t i = 0; i < depthMat.rows; i++) {
-        uchar *maskData = mask.ptr<uchar>(i);
-        uchar *rgbData=rgb.ptr<uchar>(i);
-        float *depthData=depthMat.ptr<float>(i);
-        //        double *depthData = depthMat.ptr<double>(i);
-        for (size_t j = 0; j < depthMat.cols; j++) {
-            if (maskData[j] > 0&&depthData[j]>0) {
-                //                cout<<"depth"<<depthMat.at<float>(Point2f(j,i))<<"Points:"<<Point2f(j,i)<<endl;
-                points.push_back(Point3f(j, i,depthData[j]));
-                uchar tG,tB,tR;
-                tB=rgbData[j*4+0];
-                tG=rgbData[j*4+1];
-                tR=rgbData[j*4+2];
-                b+=tB;
-                g+=tG;
-                r+=tR;
-                //                cout<<tB<<","<<tG<<","<<tR<<endl;
+    try{
+        vector<Point3f> points;
+        points.clear();
+        long r=0,g=0,b=0;
+        for (size_t i = 0; i < depthMat.rows; i++) {
+            uchar *maskData = mask.ptr<uchar>(i);
+            uchar *rgbData=rgb.ptr<uchar>(i);
+            float *depthData=depthMat.ptr<float>(i);
+            //        double *depthData = depthMat.ptr<double>(i);
+            for (size_t j = 0; j < depthMat.cols; j++) {
+                if (maskData[j] > 0&&depthData[j]>0) {
+                    //                cout<<"depth"<<depthMat.at<float>(Point2f(j,i))<<"Points:"<<Point2f(j,i)<<endl;
+                    points.push_back(Point3f(j, i,depthData[j]));
+                    uchar tG,tB,tR;
+                    tB=rgbData[j*4+0];
+                    tG=rgbData[j*4+1];
+                    tR=rgbData[j*4+2];
+                    b+=tB;
+                    g+=tG;
+                    r+=tR;
+                    //                cout<<tB<<","<<tG<<","<<tR<<endl;
+                }
             }
         }
+        unsigned char color;
+        if((g-b)/b>0.2&&(g-r)/r>0.2)
+            color=1;
+        else if((b-g)/g>0.2&&(b-r)/r>0.2)
+            color=2;
+        else color=3;
+        //    cout<<"test getBoxPointsDepth"<<endl;
+        //    cout<<(Mat)points<<endl;
+        //    cout<<"test RGB:"<<b<<","<<g<<","<<r<<endl;
+        return pair<vector<Point3f>,int>(points,color);
     }
-    unsigned char color;
-    if((g-b)/b>0.2&&(g-r)/r>0.2)
-        color=1;
-    else if((b-g)/g>0.2&&(b-r)/r>0.2)
-        color=2;
-    else color=3;
-    //    cout<<"test getBoxPointsDepth"<<endl;
-    //    cout<<(Mat)points<<endl;
-    //    cout<<"test RGB:"<<b<<","<<g<<","<<r<<endl;
-    return pair<vector<Point3f>,int>(points,color);
+    catch(...){
+        perror("getBoxPointsDepth");
+    }
 }
 
 Point3f MyThread::getBoxPointsDepth(Mat depthMat, Point2f pts){
@@ -832,7 +858,8 @@ Point3f MyThread::getBoxPointsDepth(Mat depthMat, Point2f pts){
 
 
 bool MyThread::setBackGround(){
-    //    pthread_mutex_lock(&mutex);
+    //    try{
+    //        //    pthread_mutex_lock(&mutex);
     if(!ifBackGoundSet){
         depthMatUndistorted.copyTo(backGround);
         groundPts.clear();
@@ -874,8 +901,8 @@ bool MyThread::setBackGround(){
     }
     else if(!ifOriginSet){
         try{
-        for(size_t i=0;i<aprilTags.tags.size();i++){
-            if(aprilTags.tags.at(i).id==0){
+            for(size_t i=0;i<aprilTags.tags.size();i++){
+                if(aprilTags.tags.at(i).id==0){
                     Point3f center=Point3f(aprilTags.tags.at(i).cxy.first, aprilTags.tags.at(i).cxy.second,
                                            depthMatUndistorted.at<float>(Point(aprilTags.tags.at(i).cxy.first, aprilTags.tags.at(i).cxy.second)));
                     vector<Point3f> tpts;
@@ -899,13 +926,15 @@ bool MyThread::setBackGround(){
 
         }
         catch(...){
+            cout<<"set origin"<<endl;
             perror("set origin");
         }
     }
     return true;
-    }
+}
 
-    vector<Point3f> MyThread::convertWorld2Ground(vector<Point3f> inputPts){
+vector<Point3f> MyThread::convertWorld2Ground(vector<Point3f> inputPts){
+    try{
         vector<Point3f> tPts;
         for(size_t j=0;j<inputPts.size();j++){
             Mat_<double> tMat(3,1);
@@ -913,27 +942,32 @@ bool MyThread::setBackGround(){
             tMat.at<double>(1)=inputPts.at(j).y;
             tMat.at<double>(2)=inputPts.at(j).z;
             tMat=R2G.inv()*(tMat-T2G)+T2O;
-            cout<<T2O<<endl;
-            if(tMat.at<double>(2)>=0)
+//            cout<<T2O<<endl;
+//            if(tMat.at<double>(2)>=0)
                 tPts.push_back(Point3f(tMat.at<double>(0),tMat.at<double>(1),tMat.at<double>(2)));
         }
         return tPts;
-        //        return inputPts;
+    }
+    catch(...){
+        perror("convertWorld2Ground");
     }
 
-    Point3f MyThread::convertWorld2Ground(Point3f inputPts){
-        Mat_<double> tMat(3,1);
-        tMat.at<double>(0)=inputPts.x;
-        tMat.at<double>(1)=inputPts.y;
-        tMat.at<double>(2)=inputPts.z;
-        tMat=R2G.inv()*(tMat-T2G)+T2O;
-        return Point3f(tMat.at<double>(0),tMat.at<double>(1),tMat.at<double>(2));
-    }
+    //        return inputPts;
+}
 
-    Mat MyThread::rotatedImage(Mat& inputImage){
-        rotationMat=getRotationMatrix2D(Point(inputImage.cols/2,inputImage.rows/2),180,1);
-        Mat outputImage;
-        warpAffine(inputImage,outputImage,rotationMat,inputImage.size());
-        return outputImage;
-    }
+Point3f MyThread::convertWorld2Ground(Point3f inputPts){
+    Mat_<double> tMat(3,1);
+    tMat.at<double>(0)=inputPts.x;
+    tMat.at<double>(1)=inputPts.y;
+    tMat.at<double>(2)=inputPts.z;
+    tMat=R2G.inv()*(tMat-T2G)+T2O;
+    return Point3f(tMat.at<double>(0),tMat.at<double>(1),tMat.at<double>(2));
+}
+
+Mat MyThread::rotatedImage(Mat& inputImage){
+    rotationMat=getRotationMatrix2D(Point(inputImage.cols/2,inputImage.rows/2),180,1);
+    Mat outputImage;
+    warpAffine(inputImage,outputImage,rotationMat,inputImage.size());
+    return outputImage;
+}
 

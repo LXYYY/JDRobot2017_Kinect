@@ -39,6 +39,23 @@ void MainWindow:: acceptConnection()
 
 }
 
+void MainWindow::drawRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine)
+{
+    cout<<"rgbd:"<<bytesPerLine<<endl;
+    rgbd=QImage(imageData,cols,rows,bytesPerLine,QImage::Format_RGB32);
+    ui->rgbd->clear();
+    ui->rgbd->setPixmap(QPixmap::fromImage(rgbd));
+    ui->rgbd->resize(ui->rgbd->pixmap()->size()/0.8);
+}
+
+void MainWindow::drawDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine)
+{
+    cout<<"depth:"<<bytesPerLine<<endl;
+    depth=QImage(imageData,cols,rows,bytesPerLine,QImage::Format_Grayscale8);
+    ui->depthUndistorted->clear();
+    ui->depthUndistorted->setPixmap(QPixmap::fromImage(depth));
+    ui->depthUndistorted->resize(ui->depthUndistorted->pixmap()->size()/0.8);
+}
 
 void MainWindow::draw1Point(float *points, int size){
 //    uint32_t size = ui->openGLWidget->points.size();
@@ -56,10 +73,12 @@ void MainWindow::draw1Point(float *points, int size){
         tpoints[1]=points[(i-1)*3+1];
         tpoints[2]=points[(i-1)*3+2];
         ui->openGLWidget->points.push_back(tpoints);
-//        if(tpoints[0]==0&&tpoints[1]==0){
-//            cout<<"drawPoints:"<<tpoints[0]<<","<<tpoints[1]<<","<<tpoints[2]<<endl;
-//        }
+////        if(tpoints[0]==0&&tpoints[1]==0){
+////            cout<<"drawPoints:"<<tpoints[0]<<","<<tpoints[1]<<","<<tpoints[2]<<endl;
+////        }
     }
+
+
 //    for(size_t i=0;i<ui->openGLWidget->points.size();i++){
 //        cout<<ui->openGLWidget->points.at(i)[0]<<","
 //             <<ui->openGLWidget->points.at(i)[1]<<","
@@ -105,6 +124,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
     //connect(myThread,SIGNAL(drawPoints(float*,size_t)),this,SLOT(draw1Point(float*,size_t)));
     connect(myThread,SIGNAL(drawPoints(float*,int)),this,SLOT(draw1Point(float*,int)));
+    connect(this,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
+    connect(myThread,SIGNAL(drawRgbd(unsigned char*,int,int,int)),this,SLOT(drawRgbd(unsigned char*,int,int,int)));
+    connect(myThread,SIGNAL(drawDepth(unsigned char*,int,int,int)),this,SLOT(drawDepth(unsigned char*,int,int,int)));
     myThread->start();
     communicator->start();
 }
@@ -117,22 +139,22 @@ MainWindow::~MainWindow()
 
 void MainWindow::update_mat_display(float  mat[16],int index ){
 
-    // ui->tableWidget->setItem(1,1,new QTableWidgetItem("123"));
+//    // ui->tableWidget->setItem(1,1,new QTableWidgetItem("123"));
 
-    for(int i=0;i<4;i++){
+//    for(int i=0;i<4;i++){
 
-        for(int j=0;j<4;j++){
+//        for(int j=0;j<4;j++){
 
-            ui->tableWidget->setItem(i+index*5,j,new QTableWidgetItem(QString().sprintf("%4.2f",mat[i*4+j])));
-        }
+//            ui->tableWidget->setItem(i+index*5,j,new QTableWidgetItem(QString().sprintf("%4.2f",mat[i*4+j])));
+//        }
 
-    }
+//    }
 
 
 }
 void MainWindow::repaint(){
 
-    ui->tableWidget->horizontalHeader()->setFixedWidth(ui->tableWidget->width()/4);
+//    ui->tableWidget->horizontalHeader()->setFixedWidth(ui->tableWidget->width()/4);
 //    qDebug("Repaint");
 }
 
@@ -234,7 +256,7 @@ void MainWindow::timeup(){
 
 void MainWindow::on_pushButton_clicked()
 {
-    myThread->setBackGround();
+    emit setBackGround();
 }
 
 void MainWindow::on_pushButton_2_clicked()

@@ -20,7 +20,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-
+    QImage rgbd,depth;
     uint8_t data[1];
 
 private slots:
@@ -69,7 +69,10 @@ private slots:
 
     void tttest();
 
-
+    void drawRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void drawDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+signals:
+    void setBackGround();
 private:
     Ui::MainWindow *ui;
 };
