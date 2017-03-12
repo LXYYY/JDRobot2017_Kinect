@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>919</width>
-    <height>687</height>
+    <width>1362</width>
+    <height>721</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -124,7 +124,7 @@
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="0" column="0">
-           <widget class="QLabel" name="depthUndistorted">
+           <widget class="QLabel" name="image1">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -137,7 +137,7 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="rgbd">
+           <widget class="QLabel" name="image2">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>1</horstretch>
@@ -433,6 +433,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="chageImages">
+            <property name="text">
+             <string>change images</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="pubm_Contorl_Button">
             <property name="text">
              <string>开气泵</string>
@@ -466,7 +473,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>919</width>
+     <width>1362</width>
      <height>25</height>
     </rect>
    </property>

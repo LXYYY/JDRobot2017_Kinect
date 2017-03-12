@@ -27,7 +27,7 @@ class MyThread : public QThread
     Q_OBJECT
 public:
     enum ColorE{
-        Green=0,
+        Green=1,
         Blue,
         Yellow
     };
@@ -36,7 +36,7 @@ public:
         SEARCH_CASE=1,
         PAUSE=2
     };
-    enum ModeE mode=SEARCH_BOX;
+    int mode=SEARCH_BOX;
     AprilTagsClass aprilTags;
     libfreenect2::Freenect2Device::IrCameraParams irParams;
     libfreenect2::Freenect2Device::ColorCameraParams colorParams;
@@ -63,7 +63,11 @@ public:
     struct CaseS{
         int color;
         int ptId;   //0:left top 1:center 2:right top
-        Point3f point;
+        float centerAngle;
+        float targetAngle[4];
+        float targetX[4];
+        float targetDir[4];
+        Point3f center;
         Point2f dir=Point(0,0);
     };
 
@@ -104,9 +108,13 @@ signals:
 
     void sendPoint(unsigned char id,float* point);
 
-    void drawRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine);
-    void drawDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushContours(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushProj(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+
 public slots:
+    void changeMode();
     bool setBackGround();
 };
 #endif //JDROBOT_THREADS_H

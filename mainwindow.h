@@ -20,8 +20,13 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
-    QImage rgbd,depth;
+    QImage rgbd,depth,contours,proj;
     uint8_t data[1];
+
+    enum changeImageE{
+        PAGE1=0,
+        PAGE2=1
+    }Page;
 
 private slots:
 
@@ -69,10 +74,16 @@ private slots:
 
     void tttest();
 
-    void drawRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine);
-    void drawDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushContours(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void pushProj(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void on_chageImages_clicked();
+
 signals:
     void setBackGround();
+    void changeMode();
+
 private:
     Ui::MainWindow *ui;
 };

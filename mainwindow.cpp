@@ -39,22 +39,31 @@ void MainWindow:: acceptConnection()
 
 }
 
-void MainWindow::drawRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine)
+void MainWindow::pushRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine)
 {
-    cout<<"rgbd:"<<bytesPerLine<<endl;
+//    cout<<"rgbd:"<<bytesPerLine<<endl;
     rgbd=QImage(imageData,cols,rows,bytesPerLine,QImage::Format_RGB32);
-    ui->rgbd->clear();
-    ui->rgbd->setPixmap(QPixmap::fromImage(rgbd));
-    ui->rgbd->resize(ui->rgbd->pixmap()->size()/0.8);
+    ui->image1->clear();
+    ui->image1->setPixmap(QPixmap::fromImage(rgbd));
+    ui->image1->resize(ui->image1->pixmap()->size());
 }
 
-void MainWindow::drawDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine)
+void MainWindow::pushDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine)
 {
-    cout<<"depth:"<<bytesPerLine<<endl;
-    depth=QImage(imageData,cols,rows,bytesPerLine,QImage::Format_Grayscale8);
-    ui->depthUndistorted->clear();
-    ui->depthUndistorted->setPixmap(QPixmap::fromImage(depth));
-    ui->depthUndistorted->resize(ui->depthUndistorted->pixmap()->size()/0.8);
+//    cout<<"depth:"<<bytesPerLine<<endl;
+    depth=QImage(imageData,cols,rows,bytesPerLine,QImage::Format_RGB888);
+    ui->image2->clear();
+    ui->image2->setPixmap(QPixmap::fromImage(depth));
+    ui->image2->resize(ui->image2->pixmap()->size());
+}
+
+void MainWindow::pushContours(unsigned char* imageData,int cols,int rows,int bytesPerLine){
+
+}
+
+void MainWindow::pushProj(unsigned char* imageData,int cols,int rows,int bytesPerLine){
+
+
 }
 
 void MainWindow::draw1Point(float *points, int size){
@@ -73,12 +82,12 @@ void MainWindow::draw1Point(float *points, int size){
         tpoints[1]=points[(i-1)*3+1];
         tpoints[2]=points[(i-1)*3+2];
         ui->openGLWidget->points.push_back(tpoints);
+//        delete tpoints;
 ////        if(tpoints[0]==0&&tpoints[1]==0){
 ////            cout<<"drawPoints:"<<tpoints[0]<<","<<tpoints[1]<<","<<tpoints[2]<<endl;
 ////        }
     }
-
-
+//    cout<<"drawPointsize:"<<ui->openGLWidget->points.size()<<endl;
 //    for(size_t i=0;i<ui->openGLWidget->points.size();i++){
 //        cout<<ui->openGLWidget->points.at(i)[0]<<","
 //             <<ui->openGLWidget->points.at(i)[1]<<","
@@ -125,8 +134,11 @@ MainWindow::MainWindow(QWidget *parent) :
     //connect(myThread,SIGNAL(drawPoints(float*,size_t)),this,SLOT(draw1Point(float*,size_t)));
     connect(myThread,SIGNAL(drawPoints(float*,int)),this,SLOT(draw1Point(float*,int)));
     connect(this,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
-    connect(myThread,SIGNAL(drawRgbd(unsigned char*,int,int,int)),this,SLOT(drawRgbd(unsigned char*,int,int,int)));
-    connect(myThread,SIGNAL(drawDepth(unsigned char*,int,int,int)),this,SLOT(drawDepth(unsigned char*,int,int,int)));
+    connect(myThread,SIGNAL(pushRgbd(unsigned char*,int,int,int)),this,SLOT(pushRgbd(unsigned char*,int,int,int)));
+    connect(myThread,SIGNAL(pushDepth(unsigned char*,int,int,int)),this,SLOT(pushDepth(unsigned char*,int,int,int)));
+    connect(myThread,SIGNAL(pushContours(unsigned char*,int,int,int)),this,SLOT(pushContours(unsigned char*,int,int,int)));
+    connect(myThread,SIGNAL(pushProj(unsigned char*,int,int,int)),this,SLOT(pushProj(unsigned char*,int,int,int)));
+    connect(this,SIGNAL(changeMode()),myThread,SLOT(changeMode()));
     myThread->start();
     communicator->start();
 }
@@ -375,4 +387,9 @@ void MainWindow:: tttest(){
 
 //    qDebug("Fuck You");
 
+}
+
+void MainWindow::on_chageImages_clicked()
+{
+    changeMode();
 }
