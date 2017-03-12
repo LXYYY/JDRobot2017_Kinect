@@ -452,6 +452,38 @@ bool MyThread::getFrames(libfreenect2::Frame *rgb, libfreenect2::Frame *ir, libf
     return true;
 }
 int thresh=-1;
+
+void splitColor(Mat& rgbd,Mat mask){
+    cout<<"rgbd.channels"<<rgbd.channels()<<endl;
+    for (size_t i = 0; i < rgbd.rows; i++) {
+        uchar *maskData = mask.ptr<uchar>(i);
+        uchar *rgbdData=rgbd.ptr<uchar>(i);
+        for (size_t j = 0; j < rgbd.cols; j++) {
+            if (maskData[j]>0) {
+                float b=rgbdData[(j-1)*4+0];
+                float g=rgbdData[(j-1)*4+1];
+                float r=rgbdData[(j-1)*4+2];
+//                cout<<b<<","<<g<<","<<"r"<<r<<endl;
+                if((g-b)/b>0.2&&(g-r)/r>0.2){
+                    rgbdData[(j)*4+0]=100;
+                    rgbdData[(j)*4+1]=100;
+                    rgbdData[(j)*4+2]=100;
+                  }
+                else if((b-g)/g>0.2&&(b-r)/r>0.2){
+                    rgbdData[(j)*4+0]=255;
+                    rgbdData[(j)*4+1]=255;
+                    rgbdData[(j)*4+2]=255;
+                }
+                else {
+                    rgbdData[(j)*4+0]=170;
+                    rgbdData[(j)*4+1]=170;
+                    rgbdData[(j)*4+2]=170;
+                }
+            }
+        }
+    }
+}
+
 bool MyThread::showFrames(){
     try{
 //        cout<<"mode:"<<mode<<endl;
@@ -499,16 +531,20 @@ bool MyThread::showFrames(){
 
                 Mat canny,rgbdGray;
                 Mat bMat,gMat,rMat;
-                cvtColor(rgbd,rgbdGray,COLOR_BGR2GRAY);
-                rgbdGray.copyTo(rgbdGray,binaryMat);
-                Canny(rgbdGray,canny,150,100,3);
-                cout<<"test:"<<canny.empty()<<endl;
+
+                rgbd.copyTo(rgbdGray,binaryMat);
+                GaussianBlur(rgbdGray,rgbdGray,Size(5,5),0);
+//                splitColor(rgbdGray,binaryMat);
+                cvtColor(rgbdGray,rgbdGray,COLOR_BGR2GRAY);
+                imshow("rgbdGray",rgbdGray);
+                Canny(rgbdGray,canny,200,150,3);
+                imshow("canny",canny);
                 vector<Vec4i> hierarchy;
-                vector<vector<Point> > edges;
-                findContours(canny,edges,RETR_TREE,CHAIN_APPROX_SIMPLE);
+//                vector<vector<Point> > edges;
+//                findContours(canny,edges,RETR_TREE,CHAIN_APPROX_SIMPLE);
 //                drawContours(binaryMat,edges,-1,Scalar(0));
-                imshow("test",binaryMat);
-                usleep(10000);
+//                imshow("test",binaryMat);
+//                usleep(10000);
 
                 vector<vector<Point> > contours0;
 
@@ -517,14 +553,14 @@ bool MyThread::showFrames(){
                 pair<vector<Point3f>,int> tBoxPointsDepth;
                 vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
 
-                findContours(binaryMat, contours0, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
+                findContours(canny, contours0, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
                 cvtColor(binaryMat,binaryMat,COLOR_GRAY2BGR);
                 drawContours(binaryMat,contours0,-1,Scalar(0,0,255));
                 emit pushContours(binaryMat.data,binaryMat.cols,binaryMat.rows,binaryMat.cols*binaryMat.channels());
 
 //                cout<<"contours.size():"<<contours0.size()<<endl;
                 for (int i = 0; i < contours0.size(); i++) {
-                    if (contourArea(contours0.at(i)) >= 3000) {
+                    if (contours0.at(i).size()>4&&contourArea(contours0.at(i)) >= 3000) {
                         vector<int> convex;
                         vector<Point> convexP;
                         vector<Vec4i> convexity;
@@ -555,6 +591,7 @@ bool MyThread::showFrames(){
                                 }
                             }
 //                            cout<<"test convexity:"<<max<<","<<scdMax<<endl;
+
                             if(max>5){
                                 vector<Point> box1,box2;
                                 box1.insert(box1.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]));
@@ -564,6 +601,7 @@ bool MyThread::showFrames(){
                                 contours0.push_back(box2);
                                 continue;
                             }
+
 //                        }
                         /////////make a mask//////////
                         mask.setTo(0);
