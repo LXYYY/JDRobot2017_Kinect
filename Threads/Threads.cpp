@@ -429,7 +429,7 @@ void OnMouseAction(int event, int x, int y, int flags, void *ustc) {
     if (event == CV_EVENT_LBUTTONDOWN) {
         pressed = true;
     } else if (event == CV_EVENT_LBUTTONUP && pressed) {
-        cout<<x<<","<<y<<ends<< img->at<float>(y, x) << endl;
+        cout/*<<x<<","<<y<<*//*ends*/<< img->at<Vec4b>(y, x) << endl;
     }
 }
 
@@ -460,16 +460,16 @@ void splitColor(Mat& rgbd,Mat mask){
         uchar *rgbdData=rgbd.ptr<uchar>(i);
         for (size_t j = 0; j < rgbd.cols; j++) {
             if (maskData[j]>0) {
-                float b=rgbdData[(j-1)*4+0];
-                float g=rgbdData[(j-1)*4+1];
-                float r=rgbdData[(j-1)*4+2];
+                float b=rgbdData[(j)*4+0];
+                float g=rgbdData[(j)*4+1];
+                float r=rgbdData[(j)*4+2];
 //                cout<<b<<","<<g<<","<<"r"<<r<<endl;
-                if((g-b)/b>0.2&&(g-r)/r>0.2){
+                if((g-b)/b>0.1&&(g-r)/r>0.1){
                     rgbdData[(j)*4+0]=100;
                     rgbdData[(j)*4+1]=100;
                     rgbdData[(j)*4+2]=100;
                   }
-                else if((b-g)/g>0.2&&(b-r)/r>0.2){
+                else if((b-g)/g>0.1&&(b-r)/r>0.1){
                     rgbdData[(j)*4+0]=255;
                     rgbdData[(j)*4+1]=255;
                     rgbdData[(j)*4+2]=255;
@@ -484,6 +484,7 @@ void splitColor(Mat& rgbd,Mat mask){
     }
 }
 
+int thresh1=236,thresh2=400;
 bool MyThread::showFrames(){
     try{
 //        cout<<"mode:"<<mode<<endl;
@@ -492,6 +493,7 @@ bool MyThread::showFrames(){
         boxes.clear();
         Mat rgbdCopy;
         rgbd.copyTo(rgbdCopy);
+//        imshow("undistorted",rgbd);
 //        cout<<"test:"<<ifBackGoundSet<<","<<ifOriginSet<<endl;
         if(ifBackGoundSet&&!ifOriginSet){
             aprilTags.processImage(rgbdCopy);
@@ -500,6 +502,10 @@ bool MyThread::showFrames(){
         }
         if(ifBackGoundSet){
 //            cout<<"fuck1"<<endl;
+            Mat binaryMat;
+            vector<Point3f> pts2Draw;
+
+            try{
             line(rgbdCopy,Point(groundPts.at(1).x,groundPts.at(1).y),
                  Point(groundPts.at(0).x,groundPts.at(0).y),Scalar(0,0,255));
             line(rgbdCopy,Point(groundPts.at(2).x,groundPts.at(2).y),
@@ -515,15 +521,22 @@ bool MyThread::showFrames(){
 ////            imshow("background", backGround / 1024.f);
 ////            imshow("foregound", foreGround / 1024.f);
 
-            Mat binaryMat;
             binaryMat=(foreGround/1000.f*255.f);
             binaryMat.convertTo(binaryMat,CV_8U);
             GaussianBlur(binaryMat,binaryMat,Size(3,3),0);
 ////            imshow("binary",binaryMat);
 
-            vector<Point3f> pts2Draw;
-
+            }
+            catch(...){
+                perror("part1");
+            }
             if(mode==SEARCH_BOX){
+                Mat mask;
+                mask.create(foreGround.size(), CV_8UC1);
+                pair<vector<Point3f>,int> tBoxPointsDepth;
+                vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
+                vector<vector<Point> > contours0;
+                try{
 //                cout<<"fuck2"<<endl;
 
                 //            cout<<"testing"<<endl;
@@ -534,33 +547,34 @@ bool MyThread::showFrames(){
 
                 rgbd.copyTo(rgbdGray,binaryMat);
                 GaussianBlur(rgbdGray,rgbdGray,Size(5,5),0);
-//                splitColor(rgbdGray,binaryMat);
+                splitColor(rgbdGray,binaryMat);
                 cvtColor(rgbdGray,rgbdGray,COLOR_BGR2GRAY);
-                imshow("rgbdGray",rgbdGray);
-                Canny(rgbdGray,canny,200,150,3);
-                imshow("canny",canny);
+//                imshow("rgbdGray",rgbdGray);
+                Canny(rgbdGray,canny,thresh1,thresh2,3);
+//                imshow("canny",canny);
                 vector<Vec4i> hierarchy;
-//                vector<vector<Point> > edges;
-//                findContours(canny,edges,RETR_TREE,CHAIN_APPROX_SIMPLE);
-//                drawContours(binaryMat,edges,-1,Scalar(0));
+                vector<vector<Point> > edges;
+                findContours(canny,edges,RETR_TREE,CHAIN_APPROX_SIMPLE);
+                drawContours(binaryMat,edges,-1,Scalar(0),3);
 //                imshow("test",binaryMat);
 //                usleep(10000);
 
-                vector<vector<Point> > contours0;
 
-                Mat mask;
-                mask.create(foreGround.size(), CV_8UC1);
-                pair<vector<Point3f>,int> tBoxPointsDepth;
-                vector<Point3f> tBoxPoints3dG,tBoxPoints3dW;
+;
 
-                findContours(canny, contours0, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+                findContours(binaryMat, contours0, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
                 cvtColor(binaryMat,binaryMat,COLOR_GRAY2BGR);
-                drawContours(binaryMat,contours0,-1,Scalar(0,0,255));
+                RNG rng;
+                drawContours(binaryMat,contours0,-1,Scalar(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255)));
                 emit pushContours(binaryMat.data,binaryMat.cols,binaryMat.rows,binaryMat.cols*binaryMat.channels());
-
+                }
+                catch(...){
+                    perror("part2");
+                }
+                try{
 //                cout<<"contours.size():"<<contours0.size()<<endl;
                 for (int i = 0; i < contours0.size(); i++) {
-                    if (contours0.at(i).size()>4&&contourArea(contours0.at(i)) >= 3000) {
+                    if (contours0.at(i).size()>4&&contourArea(contours0.at(i)) >= 2000) {
                         vector<int> convex;
                         vector<Point> convexP;
                         vector<Vec4i> convexity;
@@ -569,38 +583,36 @@ bool MyThread::showFrames(){
                         vector<vector<Point> > t;
                         t.push_back(convexP);
                         drawContours(binaryMat,t,-1,Scalar(0,255,0));
-                        imshow("thresh",binaryMat);
-                        usleep(10000);
 //                        cout<<"isContourConvex:"<<isContourConvex(contours0.at(i))<<endl;
 //                        if(!isContourConvex(contours0.at(i))){
-                            convexityDefects(contours0.at(i),convex,convexity);
-                            int idMax=-1;
-                            float max=0;
-                            for(size_t j=0;j<convexity.size();j++){
-                                if(convexity.at(j)[3]/256.f>max){
-                                    max=convexity.at(j)[3]/256.f;
-                                    idMax=j;
-                                }
-                            }
-                            int idMin=-1;
-                            float scdMax=0;
-                            for(size_t j=0;j<convexity.size();j++){
-                                if(convexity.at(j)[3]/256.f>scdMax&&j!=idMax){
-                                    scdMax=convexity.at(j)[3]/256.f;
-                                    idMin=j;
-                                }
-                            }
-//                            cout<<"test convexity:"<<max<<","<<scdMax<<endl;
+//                            convexityDefects(contours0.at(i),convex,convexity);
+//                            int idMax=-1;
+//                            float max=0;
+//                            for(size_t j=0;j<convexity.size();j++){
+//                                if(convexity.at(j)[3]/256.f>max){
+//                                    max=convexity.at(j)[3]/256.f;
+//                                    idMax=j;
+//                                }
+//                            }
+//                            int idMin=-1;
+//                            float scdMax=0;
+//                            for(size_t j=0;j<convexity.size();j++){
+//                                if(convexity.at(j)[3]/256.f>scdMax&&j!=idMax){
+//                                    scdMax=convexity.at(j)[3]/256.f;
+//                                    idMin=j;
+//                                }
+//                            }
+////                            cout<<"test convexity:"<<max<<","<<scdMax<<endl;
 
-                            if(max>5){
-                                vector<Point> box1,box2;
-                                box1.insert(box1.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]));
-                                box2.insert(box2.begin(),contours0.at(i).begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]));
-                                box2.insert(box2.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]),contours0.at(i).end());
-                                contours0.push_back(box1);
-                                contours0.push_back(box2);
-                                continue;
-                            }
+//                            if(max>5&&scdMax>5){
+//                                vector<Point> box1,box2;
+//                                box1.insert(box1.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]));
+//                                box2.insert(box2.begin(),contours0.at(i).begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]));
+//                                box2.insert(box2.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]),contours0.at(i).end());
+//                                contours0.push_back(box1);
+//                                contours0.push_back(box2);
+//                                continue;
+//                            }
 
 //                        }
                         /////////make a mask//////////
@@ -640,6 +652,7 @@ bool MyThread::showFrames(){
                             z+=tBoxPoints3dG.at(i).z;
                         }
                         z/=tBoxPoints3dG.size();
+                        if(proj2ZPts.size()<4) continue;
                         RotatedRect boundingBox=minAreaRect(proj2ZPts);
 
                         boundingBox.points(tBox.pts);
@@ -661,7 +674,12 @@ bool MyThread::showFrames(){
                         ///////push a new box end///////////
                     }
                 }
+                }
+                catch(...){
+                    perror("part3");
+                }
 //                cout<<"fuck3"<<endl;
+//                imshow("thresh",binaryMat);
 
                 ///////make a image to check//////////
 
@@ -845,9 +863,10 @@ bool MyThread::showFrames(){
 //        cv::imshow("depth", depthMat / 4096.0f);
 //        cv::imshow("undistorted", depthMatUndistorted / 1024.f);
 //        cv::imshow("registered", rgbdCopy);
-//        usleep(1000);
+////        usleep(1000);
 //        char c=waitKey(1);
 //        if(c=='g') setBackGround();
+//        usleep(10000);
         return false;
     }
     catch(...){
@@ -857,8 +876,9 @@ bool MyThread::showFrames(){
 
 void MyThread::init(libfreenect2::Freenect2Device *dev) {
 //    namedWindow("undistorted");
-//    setMouseCallback("undistorted", OnMouseAction, &depthMatUndistorted);
-//    createTrackbar("threash","undistorted", &thresh,300);
+//    setMouseCallback("undistorted", OnMouseAction, &rgbd);
+//    createTrackbar("thresh1","undistorted", &thresh1,700);
+//    createTrackbar("thresh2","undistorted", &thresh2,700);
     cases.reserve(3);
     T2O=Mat_<double>(3,1)<<0,0,0;
     irParams = dev->getIrCameraParams();

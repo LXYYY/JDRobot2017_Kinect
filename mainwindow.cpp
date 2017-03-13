@@ -77,11 +77,11 @@ void MainWindow::draw1Point(float *points, int size){
 //    cout<<"size="<<size<<endl;
     ui->openGLWidget->points.clear();
     for(size_t i=0;i<size;i++){
-        float *tpoints = new float[3];
-        tpoints[0]=points[(i-1)*3+0];
-        tpoints[1]=points[(i-1)*3+1];
-        tpoints[2]=points[(i-1)*3+2];
-        ui->openGLWidget->points.push_back(tpoints);
+//        float *tpoints = new float[3];
+//        tpoints[0]=points[(i-1)*3+0];
+//        tpoints[1]=points[(i-1)*3+1];
+//        tpoints[2]=points[(i-1)*3+2];
+//        ui->openGLWidget->points.push_back(tpoints);
 //        delete tpoints;
 ////        if(tpoints[0]==0&&tpoints[1]==0){
 ////            cout<<"drawPoints:"<<tpoints[0]<<","<<tpoints[1]<<","<<tpoints[2]<<endl;
