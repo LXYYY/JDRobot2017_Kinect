@@ -80,10 +80,12 @@ private slots:
     void pushProj(unsigned char* imageData,int cols,int rows,int bytesPerLine);
     void on_chageImages_clicked();
 
+    void on_setOrigin_clicked();
+
 signals:
     void setBackGround();
     void changeMode();
-
+    void setOrigin();
 private:
     Ui::MainWindow *ui;
 };

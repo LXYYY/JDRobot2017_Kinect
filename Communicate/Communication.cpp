@@ -16,6 +16,7 @@ bool Communication::setFrame(unsigned char id, float x, float y, float z,float d
     frame.x=x;
     frame.y=y;
     frame.z=z;
+//    cout<<x<<","<<y<<","<<z<<endl;
     frame.dir=atan(dirY/dirX);
     frame.color=color;
 //    frame.Tail1=TAIL1;
@@ -55,6 +56,8 @@ bool Communication::sendMsg(unsigned char* msg) {
 }
 
 bool Communication::sendFrame(unsigned char id, float x,float y,float z,float dirX,float dirY,unsigned char color) {
+//    cout<<"sendframe"<<x<<","<<y<<","<<z<<endl;
+
     setFrame(id, x,y,z,dirX,dirY,color);
     if (sendMsg((unsigned char*)&frame)) {
         return true;
@@ -76,6 +79,8 @@ void Communication::run(){
 
 void Communication::sendPoint(unsigned char id, float* point){
     sendFrame(id,point[0],point[1],point[2],point[3],point[4],point[5]);
+//    cout<<"sendPoint"<<point[0]<<","<<point[1]<<","<<point[2]<<endl;
+    delete[] point;
 }
 
 bool receiveMsg(unsigned char* buff,int buff_len){

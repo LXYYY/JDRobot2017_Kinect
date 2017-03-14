@@ -433,6 +433,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="setOrigin">
+            <property name="text">
+             <string>set Origin</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="chageImages">
             <property name="text">
              <string>change images</string>

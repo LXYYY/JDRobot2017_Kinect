@@ -74,6 +74,7 @@ public:
     vector<struct CaseS> cases;
     vector<struct BoxS> boxes;
     int npts;
+    vector<Point3f> groundPtsDepth;
     vector<Point3f> groundPts;
     Mat_<double> R2G,T2G,T2O;
     Mat rotationMat;
@@ -102,6 +103,8 @@ public:
     vector<Point3f> convertWorld2Ground(vector<Point3f> inputPts);
     Point3f convertWorld2Ground(Point3f inputPts);
 
+    Point3f convertGround2World(Point3f inputPts);
+
     Mat rotatedImage(Mat& inputImage);
 signals:
     void drawPoints(float *points, int size);
@@ -116,5 +119,6 @@ signals:
 public slots:
     void changeMode();
     bool setBackGround();
+    void setOrigin();
 };
 #endif //JDROBOT_THREADS_H
