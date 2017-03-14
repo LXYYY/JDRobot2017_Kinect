@@ -32,9 +32,11 @@ public:
     SocketClass(){
 //        ip="192.168.1.125";
     }
-    bool connetServer(void);
+    bool connectServer(void);
 
     bool sendMsg(unsigned char *frame,size_t len);
+
+    bool connectCheck();
 };
 
 

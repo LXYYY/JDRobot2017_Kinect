@@ -331,7 +331,7 @@ void MyThread:: kinect()
     dev->setConfiguration(config);
 
     /// [loop start]
-    while (!protonect_shutdown) {
+    while (!shutdown) {
         if (!listener.waitForNewFrame(frames, 10 * 1000)) // 10 sconds
         {
             std::cout << "timeout!" << std::endl;
@@ -487,8 +487,6 @@ void splitColor(Mat& rgbd,Mat mask){
 int thresh1=236,thresh2=400;
 bool MyThread::showFrames(){
     try{
-        cout<<"ifbackgoundset"<<ifBackGoundSet<<endl;
-        cout<<"size:"<<groundPtsDepth.size()<<endl;
 //        cout<<"mode:"<<mode<<endl;
         Mat check(Size(1500,1500),CV_8UC3);
         check.setTo(0);
@@ -498,6 +496,8 @@ bool MyThread::showFrames(){
 //        imshow("undistorted",rgbd);
 //        cout<<"test:"<<ifBackGoundSet<<","<<ifOriginSet<<endl;
         if(ifBackGoundSet&&!ifOriginSet){
+            cout<<"ifbackgoundset"<<ifBackGoundSet<<endl;
+            cout<<"size:"<<groundPtsDepth.size()<<endl;
             aprilTags.processImage(rgbdCopy);
             aprilTags.drawTags(rgbdCopy);
             //        cout<<"test"<<endl;
@@ -625,7 +625,7 @@ bool MyThread::showFrames(){
                         /////////make a mask//////////
                         mask.setTo(0);
                         drawContours(mask, contours0, i, Scalar(255), -1);
-                        drawContours(mask, contours0, i, Scalar(0), 5);
+//                        drawContours(mask, contours0, i, Scalar(0), 5);
 //                        /////////make a mask end//////////
 
                         ////////get points and color///////
@@ -668,6 +668,15 @@ bool MyThread::showFrames(){
                         tBox.color=tBoxPointsDepth.second;
                         tBox.z=z;
 //                        cout<<"center:"<<center<<","<<z<<endl;
+
+                        switch(tBoxPointsDepth.second){
+                        case Green:
+                            break;
+                        case Blue:
+                            break;
+                        case Yellow:
+                            break;
+                        }
 
                         if(fabs((tBox.pts[0].x-tBox.pts[1].x)*(tBox.pts[0].x-tBox.pts[1].x)+(tBox.pts[0].y-tBox.pts[1].y)*(tBox.pts[0].y-tBox.pts[1].y))>
                                 fabs((tBox.pts[1].x-tBox.pts[2].x)*(tBox.pts[1].x-tBox.pts[2].x)+(tBox.pts[1].y-tBox.pts[2].y)*(tBox.pts[1].y-tBox.pts[2].y))){
@@ -729,8 +738,8 @@ bool MyThread::showFrames(){
                     point[0]=boxes.at(tgtId).center.x;
                     point[1]=boxes.at(tgtId).center.y;
                     point[2]=boxes.at(tgtId).z;
-//                    cout<<point[0]<<","<<point[1]<<","<<point[2]<<endl;
-//                    cout<<boxes.at(tgtId).center<<","<<boxes.at(tgtId).z<<endl;
+                    cout<<boxes.at(tgtId).center<<","<<boxes.at(tgtId).z<<endl;
+                    cout<<"size:"<<boxes.at(tgtId).size<<endl;
                     point[3]=boxes.at(tgtId).dir.x;
                     point[4]=boxes.at(tgtId).dir.y;
                     point[5]=boxes.at(tgtId).color;
@@ -1135,7 +1144,7 @@ void MyThread::setOrigin(){
         tMat.at<double>(2)=groundPts.at(0).z-groundPts.at(1).z;
         cout<<"y"<<tMat<<endl;
         tMat/=norm(tMat);
-        tMat.copyTo(ptsMat.col(0));
+        tMat.copyTo(ptsMat.col(1));
 
         tMat.at<double>(0)=groundPts.at(0).x-groundPts.at(2).x;
         tMat.at<double>(1)=groundPts.at(0).y-groundPts.at(2).y;
@@ -1144,10 +1153,10 @@ void MyThread::setOrigin(){
         cout<<"z"<<tMat<<endl;
         tMat.copyTo(ptsMat.col(2));
 
-        tMat=ptsMat.col(0).cross(ptsMat.col(2));
+        tMat=ptsMat.col(1).cross(ptsMat.col(2));
         cout<<"x"<<tMat<<endl;
-        tMat/=-norm(tMat);
-        tMat.copyTo(ptsMat.col(1));
+        tMat/=norm(tMat);
+        tMat.copyTo(ptsMat.col(0));
 
         tMat.at<double>(0)=groundPts.at(2).x;
         tMat.at<double>(1)=groundPts.at(2).y;
@@ -1162,4 +1171,8 @@ void MyThread::setOrigin(){
 
         ifOriginSet=true;
     }
+}
+
+void MyThread::shutDownKinect(){
+    shutdown=true;
 }

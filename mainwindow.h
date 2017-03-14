@@ -82,10 +82,13 @@ private slots:
 
     void on_setOrigin_clicked();
 
+    void on_shutDownKinect_clicked();
+
 signals:
     void setBackGround();
     void changeMode();
     void setOrigin();
+    void shutDownKinect();
 private:
     Ui::MainWindow *ui;
 };

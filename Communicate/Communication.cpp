@@ -66,7 +66,7 @@ bool Communication::sendFrame(unsigned char id, float x,float y,float z,float di
 }
 
 bool Communication::connect(void) {
-    if(!socket.connetServer()){
+    if(!socket.connectServer()){
         perror("commucation connect failed");
         return false;
     }
@@ -75,6 +75,11 @@ bool Communication::connect(void) {
 
 void Communication::run(){
     connect();
+//    while(1){
+//        std::cout<<"test"<<std::endl;
+//        socket.connectCheck();
+//        usleep(100000);
+//    }
 }
 
 void Communication::sendPoint(unsigned char id, float* point){

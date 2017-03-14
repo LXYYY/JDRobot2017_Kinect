@@ -5,7 +5,7 @@
 #include "SocketClass.h"
 #include <iostream>
 
-bool SocketClass::connetServer(void) {
+bool SocketClass::connectServer(void) {
     memset(&servaddr, 0, sizeof(servaddr));
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(MYPORT);  ///服务器端口
@@ -42,5 +42,13 @@ bool SocketClass::sendMsg(unsigned char *frame,size_t len) {
         return true;
     } ///发送
     return false;
+}
+
+bool SocketClass::connectCheck(){
+    int ret=listen(sock_cli,1);
+    std::cout<<"connectCheck"<<ret<<std::endl;
+    if(ret!=0){
+        connectServer();
+    }
 }
 

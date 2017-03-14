@@ -75,6 +75,9 @@ void MainWindow::draw1Point(float *points, int size){
 //    }
 //    qDebug("draw points");
 //    cout<<"size="<<size<<endl;
+    for(size_t i=0;i<ui->openGLWidget->points.size();i++){
+        delete[] ui->openGLWidget->points.at(i);
+    }
     ui->openGLWidget->points.clear();
     for(size_t i=0;i<size;i++){
         float *tpoints = new float[3];
@@ -140,6 +143,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(myThread,SIGNAL(pushProj(unsigned char*,int,int,int)),this,SLOT(pushProj(unsigned char*,int,int,int)));
     connect(this,SIGNAL(changeMode()),myThread,SLOT(changeMode()));
     connect(this,SIGNAL(setOrigin()),myThread,SLOT(setOrigin()));
+    connect(this,SIGNAL(shutDownKinect()),myThread,SLOT(shutDownKinect()));
     myThread->start();
     communicator->start();
 }
@@ -398,4 +402,9 @@ void MainWindow::on_chageImages_clicked()
 void MainWindow::on_setOrigin_clicked()
 {
     emit setOrigin();
+}
+
+void MainWindow::on_shutDownKinect_clicked()
+{
+    emit shutDownKinect();
 }

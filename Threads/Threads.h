@@ -26,6 +26,7 @@ class MyThread : public QThread
 {
     Q_OBJECT
 public:
+    bool shutdown=false;
     enum ColorE{
         Green=1,
         Blue,
@@ -55,6 +56,7 @@ public:
         float z;
         int color;
         Point2f dir;
+        int status;
         vector<Point3f> boxPoints3dW;
         vector<Point3f> boxPoints3dG;
         vector<Point3f> boxPointsDepth;
@@ -120,5 +122,6 @@ public slots:
     void changeMode();
     bool setBackGround();
     void setOrigin();
+    void shutDownKinect();
 };
 #endif //JDROBOT_THREADS_H
