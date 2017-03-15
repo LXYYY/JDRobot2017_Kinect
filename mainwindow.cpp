@@ -144,6 +144,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this,SIGNAL(changeMode()),myThread,SLOT(changeMode()));
     connect(this,SIGNAL(setOrigin()),myThread,SLOT(setOrigin()));
     connect(this,SIGNAL(shutDownKinect()),myThread,SLOT(shutDownKinect()));
+    connect(this,SIGNAL(readParam()),myThread,SLOT(readParam()));
+    connect(this,SIGNAL(reconnect()),communicator,SLOT(reconnect()));
     myThread->start();
     communicator->start();
 }
@@ -407,4 +409,14 @@ void MainWindow::on_setOrigin_clicked()
 void MainWindow::on_shutDownKinect_clicked()
 {
     emit shutDownKinect();
+}
+
+void MainWindow::on_readParam_clicked()
+{
+    emit readParam();
+}
+
+void MainWindow::on_reconnect_clicked()
+{
+    emit reconnect();
 }

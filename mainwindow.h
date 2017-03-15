@@ -84,11 +84,17 @@ private slots:
 
     void on_shutDownKinect_clicked();
 
+    void on_readParam_clicked();
+
+    void on_reconnect_clicked();
+
 signals:
     void setBackGround();
     void changeMode();
     void setOrigin();
     void shutDownKinect();
+    void readParam();
+    void reconnect();
 private:
     Ui::MainWindow *ui;
 };

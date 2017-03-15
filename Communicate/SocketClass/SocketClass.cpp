@@ -37,8 +37,9 @@ bool SocketClass::connectServer(void) {
 }
 
 bool SocketClass::sendMsg(unsigned char *frame,size_t len) {
-    if(send(sock_cli, frame, len, 0))
+    if(send(sock_cli, frame, len, 0)==-1)
     {
+//        connect(sock_cli, (struct sockaddr *) &servaddr, sizeof(servaddr));
         return true;
     } ///发送
     return false;

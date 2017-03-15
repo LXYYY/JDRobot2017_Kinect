@@ -326,7 +326,7 @@ void MyThread:: kinect()
     libfreenect2::Freenect2Device::Config config;
     config.EnableBilateralFilter=true;
     config.EnableEdgeAwareFilter=true;
-    config.MaxDepth=1.2f;
+    config.MaxDepth=0.95f;
     config.MinDepth=0.f;
     dev->setConfiguration(config);
 
@@ -494,7 +494,7 @@ bool MyThread::showFrames(){
         Mat rgbdCopy;
         rgbd.copyTo(rgbdCopy);
 //        imshow("undistorted",rgbd);
-//        cout<<"test:"<<ifBackGoundSet<<","<<ifOriginSet<<endl;
+        cout<<"test:"<<ifBackGoundSet<<","<<ifOriginSet<<endl;
         if(ifBackGoundSet&&!ifOriginSet){
             cout<<"ifbackgoundset"<<ifBackGoundSet<<endl;
             cout<<"size:"<<groundPtsDepth.size()<<endl;
@@ -591,37 +591,23 @@ bool MyThread::showFrames(){
                         t.push_back(convexP);
                         drawContours(binaryMat,t,-1,Scalar(0,255,0));
 //                        cout<<"isContourConvex:"<<isContourConvex(contours0.at(i))<<endl;
-//                        if(!isContourConvex(contours0.at(i))){
-//                            convexityDefects(contours0.at(i),convex,convexity);
-//                            int idMax=-1;
-//                            float max=0;
-//                            for(size_t j=0;j<convexity.size();j++){
-//                                if(convexity.at(j)[3]/256.f>max){
-//                                    max=convexity.at(j)[3]/256.f;
-//                                    idMax=j;
-//                                }
-//                            }
-//                            int idMin=-1;
-//                            float scdMax=0;
-//                            for(size_t j=0;j<convexity.size();j++){
-//                                if(convexity.at(j)[3]/256.f>scdMax&&j!=idMax){
-//                                    scdMax=convexity.at(j)[3]/256.f;
-//                                    idMin=j;
-//                                }
-//                            }
-////                            cout<<"test convexity:"<<max<<","<<scdMax<<endl;
+                        if(!isContourConvex(contours0.at(i))){
+                            convexityDefects(contours0.at(i),convex,convexity);
+                            int idMax=-1;
+                            float max=0;
+                            for(size_t j=0;j<convexity.size();j++){
+                                if(convexity.at(j)[3]/256.f>max){
+                                    max=convexity.at(j)[3]/256.f;
+                                    idMax=j;
+                                }
+                            }
+//                            cout<<"test convexity:"<<max<<","<<scdMax<<endl;
 
-//                            if(max>5&&scdMax>5){
-//                                vector<Point> box1,box2;
-//                                box1.insert(box1.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]));
-//                                box2.insert(box2.begin(),contours0.at(i).begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMin)[2]:convexity.at(idMax)[2]));
-//                                box2.insert(box2.begin(),contours0.at(i).begin()+(convexity.at(idMax)[2]>convexity.at(idMin)[2]?convexity.at(idMax)[2]:convexity.at(idMin)[2]),contours0.at(i).end());
-//                                contours0.push_back(box1);
-//                                contours0.push_back(box2);
-//                                continue;
-//                            }
+                            if(max>10){
+                                continue;
+                            }
 
-//                        }
+                        }
                         /////////make a mask//////////
                         mask.setTo(0);
                         drawContours(mask, contours0, i, Scalar(255), -1);
@@ -667,14 +653,38 @@ bool MyThread::showFrames(){
                         tBox.center=boundingBox.center;
                         tBox.color=tBoxPointsDepth.second;
                         tBox.z=z;
-//                        cout<<"center:"<<center<<","<<z<<endl;
+                        cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl<<"area:"<<tBox.size.area()<<","<<z<<endl;
 
+                        bool areaCheck=true;
                         switch(tBoxPointsDepth.second){
                         case Green:
+                            if(fabs(tBox.size.area()-(180*150))<3000)
+                                tBox.status=STATUS_LARGESIDE;
+                            else if(fabs(tBox.size.area()-(180*70))<3000)
+                                tBox.status=STATUS_MEDIUMSIDE;
+                            else if(fabs(tBox.size.area()-(150*70))<3000)
+                                tBox.status=STATUS_SMALLSIDE;
+                            else{
+                                areaCheck=false;
+                            }
                             break;
                         case Blue:
+                            if(((180*150)-tBox.size.area())<3000)
+                                tBox.status=STATUS_LARGESIDE;
+                            else if(((180*70)-tBox.size.area())<3000)
+                                tBox.status=STATUS_MEDIUMSIDE;
+                            else if(fabs(tBox.size.area()-(150*70))<3000)
+                                tBox.status=STATUS_SMALLSIDE;
+                            else{
+                                areaCheck=false;
+                            }
                             break;
                         case Yellow:
+                            if(((350*50)-tBox.size.area())<3000)
+                                tBox.status=STATUS_MEDIUMSIDE;
+                            else{
+                                areaCheck=false;
+                            }
                             break;
                         }
 
@@ -685,8 +695,8 @@ bool MyThread::showFrames(){
                         else {
                             tBox.dir=(tBox.pts[1]-tBox.pts[2]).y<=0?(tBox.pts[1]-tBox.pts[2]):(tBox.pts[2]-tBox.pts[1]);
                         }
-
-                        boxes.push_back(tBox);
+                        if(areaCheck)
+                            boxes.push_back(tBox);
                         ///////push a new box end///////////
                     }
                 }
@@ -743,7 +753,7 @@ bool MyThread::showFrames(){
                     point[3]=boxes.at(tgtId).dir.x;
                     point[4]=boxes.at(tgtId).dir.y;
                     point[5]=boxes.at(tgtId).color;
-                    emit sendPoint(Communication::TgtBox,point);
+//                    emit sendPoint(Communication::TgtBox,point);
                 }
                 /////////send box centers to communication thread end////////
             }
@@ -1127,6 +1137,8 @@ void MyThread::setOrigin(){
     if(groundPts.size()==2){
 //        vector<Point3f> groundPts3d;
 //        groundPts3d=getBoxPoints3d(groundPts);
+
+
         Point3f tPt;
         tPt=convertWorld2Ground(groundPts.at(0));
         cout<<tPt<<endl;
@@ -1169,10 +1181,28 @@ void MyThread::setOrigin(){
         T2O.at<double>(1)=0;
         T2O.at<double>(2)=0;
 
+        FileStorage fs("params.xml", FileStorage::WRITE);
+        fs<<"R2G"<<R2G;
+        fs<<"T2G"<<T2G;
+        fs<<"groundPtsDepth"<<groundPtsDepth;
+        fs.release();
         ifOriginSet=true;
     }
 }
 
 void MyThread::shutDownKinect(){
     shutdown=true;
+}
+
+void MyThread::readParam(){
+    FileStorage fs("params.xml", FileStorage::READ);
+    fs["R2G"]>>R2G;
+    fs["T2G"]>>T2G;
+    fs["groundPtsDepth"]>>groundPtsDepth;
+    fs.release();
+    T2O.at<double>(0)=0;
+    T2O.at<double>(1)=0;
+    T2O.at<double>(2)=0;
+    cout<<"read Param:"<<R2G<<endl<<T2G<<endl;
+    ifOriginSet=true;
 }

@@ -37,6 +37,12 @@ public:
         SEARCH_CASE=1,
         PAUSE=2
     };
+    enum StatusE{
+        STATUS_LARGESIDE=0,
+        STATUS_MEDIUMSIDE=1,
+        STATUS_SMALLSIDE
+    };
+
     int mode=SEARCH_BOX;
     AprilTagsClass aprilTags;
     libfreenect2::Freenect2Device::IrCameraParams irParams;
@@ -123,5 +129,6 @@ public slots:
     bool setBackGround();
     void setOrigin();
     void shutDownKinect();
+    void readParam();
 };
 #endif //JDROBOT_THREADS_H

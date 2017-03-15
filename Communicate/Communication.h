@@ -39,6 +39,7 @@ public:
         float z;
         float dir;
         unsigned char color;
+        unsigned char status;
 //        unsigned char Tail1;
 //        unsigned char Tail2;
     }  __attribute__((packed)) frame;
@@ -95,4 +96,5 @@ public:
 
 public slots:
     void sendPoint(unsigned char id, float* point);
+    void reconnect();
 };

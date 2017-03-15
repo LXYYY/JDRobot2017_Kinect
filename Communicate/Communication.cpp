@@ -91,3 +91,7 @@ void Communication::sendPoint(unsigned char id, float* point){
 bool receiveMsg(unsigned char* buff,int buff_len){
 
 }
+
+void Communication::reconnect(){
+    socket.connectServer();
+}

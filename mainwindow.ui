@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1362</width>
-    <height>758</height>
+    <height>792</height>
    </rect>
   </property>
   <property name="mouseTracking">
@@ -423,6 +423,20 @@
               </widget>
              </item>
             </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="reconnect">
+            <property name="text">
+             <string>reconnect</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="readParam">
+            <property name="text">
+             <string>read Param</string>
+            </property>
            </widget>
           </item>
           <item>
