@@ -18,6 +18,7 @@ bool Communication::setFrame(unsigned char id, float x, float y, float z,float d
     frame.z=z;
 //    cout<<x<<","<<y<<","<<z<<endl;
     frame.dir=atan(dirY/dirX);
+    cout<<"dir:"<<frame.dir<<endl;
     frame.color=color;
 //    frame.Tail1=TAIL1;
 //    frame.Tail2=TAIL2;
@@ -93,5 +94,5 @@ bool receiveMsg(unsigned char* buff,int buff_len){
 }
 
 void Communication::reconnect(){
-    socket.connectServer();
+    socket.reconnect();
 }

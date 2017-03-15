@@ -37,6 +37,8 @@ public:
     bool sendMsg(unsigned char *frame,size_t len);
 
     bool connectCheck();
+
+    bool reconnect();
 };
 
 

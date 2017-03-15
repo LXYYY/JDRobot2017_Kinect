@@ -326,7 +326,7 @@ void MyThread:: kinect()
     libfreenect2::Freenect2Device::Config config;
     config.EnableBilateralFilter=true;
     config.EnableEdgeAwareFilter=true;
-    config.MaxDepth=0.95f;
+    config.MaxDepth=0.9f;
     config.MinDepth=0.f;
     dev->setConfiguration(config);
 
@@ -494,15 +494,15 @@ bool MyThread::showFrames(){
         Mat rgbdCopy;
         rgbd.copyTo(rgbdCopy);
 //        imshow("undistorted",rgbd);
-        cout<<"test:"<<ifBackGoundSet<<","<<ifOriginSet<<endl;
-        if(ifBackGoundSet&&!ifOriginSet){
-            cout<<"ifbackgoundset"<<ifBackGoundSet<<endl;
+        cout<<"test:"<<ifBackGroundSet<<","<<ifOriginSet<<endl;
+        if(ifBackGroundSet&&!ifOriginSet){
+            cout<<"ifbackgoundset"<<ifBackGroundSet<<endl;
             cout<<"size:"<<groundPtsDepth.size()<<endl;
             aprilTags.processImage(rgbdCopy);
             aprilTags.drawTags(rgbdCopy);
             //        cout<<"test"<<endl;
         }
-        if(ifBackGoundSet&&ifOriginSet){
+        if(ifBackGroundSet&&ifOriginSet){
 //            cout<<"fuck1"<<endl;
             Mat binaryMat;
             vector<Point3f> pts2Draw;
@@ -665,7 +665,7 @@ bool MyThread::showFrames(){
                             else if(fabs(tBox.size.area()-(150*70))<3000)
                                 tBox.status=STATUS_SMALLSIDE;
                             else{
-                                areaCheck=false;
+//                                areaCheck=false;
                             }
                             break;
                         case Blue:
@@ -676,14 +676,14 @@ bool MyThread::showFrames(){
                             else if(fabs(tBox.size.area()-(150*70))<3000)
                                 tBox.status=STATUS_SMALLSIDE;
                             else{
-                                areaCheck=false;
+//                                areaCheck=false;
                             }
                             break;
                         case Yellow:
                             if(((350*50)-tBox.size.area())<3000)
                                 tBox.status=STATUS_MEDIUMSIDE;
                             else{
-                                areaCheck=false;
+//                                areaCheck=false;
                             }
                             break;
                         }
@@ -753,7 +753,7 @@ bool MyThread::showFrames(){
                     point[3]=boxes.at(tgtId).dir.x;
                     point[4]=boxes.at(tgtId).dir.y;
                     point[5]=boxes.at(tgtId).color;
-//                    emit sendPoint(Communication::TgtBox,point);
+                    emit sendPoint(Communication::TgtBox,point);
                 }
                 /////////send box centers to communication thread end////////
             }
@@ -997,6 +997,7 @@ bool MyThread::setBackGround(){
     //        //    pthread_mutex_lock(&mutex);
 //    if(!ifBackGoundSet){
         depthMatUndistorted.copyTo(backGround);
+//        imwrite("backGround.",backGround);
         vector<Point3f> tGroundPoints;
         tGroundPoints.clear();
         tGroundPoints.push_back(Point3f(backGround.cols/2,backGround.rows/2,
@@ -1032,8 +1033,10 @@ bool MyThread::setBackGround(){
         tMat.copyTo(T2G);
 
         R2G=ptsMat;
-
-        ifBackGoundSet=true;
+//        FileStorage fs("params.xml", FileStorage::WRITE);
+//        fs<<"backGround"<<backGround;
+//        fs.release();
+        ifBackGroundSet=true;
 //    }
 //    else if(!ifOriginSet){
 //        try{
@@ -1204,5 +1207,7 @@ void MyThread::readParam(){
     T2O.at<double>(1)=0;
     T2O.at<double>(2)=0;
     cout<<"read Param:"<<R2G<<endl<<T2G<<endl;
+//    backGround=imread("backGround.jpg");
+//    ifBackGroundSet=true;
     ifOriginSet=true;
 }

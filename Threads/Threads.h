@@ -87,7 +87,7 @@ public:
     Mat_<double> R2G,T2G,T2O;
     Mat rotationMat;
     bool rotationMatInited=false;
-    bool ifBackGoundSet=false;
+    bool ifBackGroundSet=false;
     bool ifOriginSet=false;
     bool stop ;
     explicit MyThread(QObject *parent = 0);
