@@ -38,9 +38,9 @@ public:
         PAUSE=2
     };
     enum StatusE{
-        STATUS_LARGESIDE=0,
-        STATUS_MEDIUMSIDE=1,
-        STATUS_SMALLSIDE
+        STATUS_GOOD=0,
+        STATUS_MEDIUM=1,
+        STATUS_BAD
     };
 
     int mode=SEARCH_BOX;

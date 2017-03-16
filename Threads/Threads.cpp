@@ -538,6 +538,8 @@ bool MyThread::showFrames(){
                 perror("part1");
             }
             if(mode==SEARCH_BOX){
+                usleep(10000);
+
                 Mat mask;
                 mask.create(foreGround.size(), CV_8UC1);
                 pair<vector<Point3f>,int> tBoxPointsDepth;
@@ -567,7 +569,7 @@ bool MyThread::showFrames(){
 //                usleep(10000);
 
 
-;
+
 
                 findContours(binaryMat, contours0, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE);
                 cvtColor(binaryMat,binaryMat,COLOR_GRAY2BGR);
@@ -659,44 +661,64 @@ bool MyThread::showFrames(){
                         switch(tBoxPointsDepth.second){
                         case Green:
                             if(fabs(tBox.size.area()-(180*150))<3000)
-                                tBox.status=STATUS_LARGESIDE;
+                                tBox.status=STATUS_BAD;
                             else if(fabs(tBox.size.area()-(180*70))<3000)
-                                tBox.status=STATUS_MEDIUMSIDE;
+                                tBox.status=STATUS_GOOD;
                             else if(fabs(tBox.size.area()-(150*70))<3000)
-                                tBox.status=STATUS_SMALLSIDE;
+                                tBox.status=STATUS_MEDIUM;
                             else{
 //                                areaCheck=false;
                             }
                             break;
                         case Blue:
                             if(((180*150)-tBox.size.area())<3000)
-                                tBox.status=STATUS_LARGESIDE;
+                                tBox.status=STATUS_GOOD;
                             else if(((180*70)-tBox.size.area())<3000)
-                                tBox.status=STATUS_MEDIUMSIDE;
+                                tBox.status=STATUS_MEDIUM;
                             else if(fabs(tBox.size.area()-(150*70))<3000)
-                                tBox.status=STATUS_SMALLSIDE;
+                                tBox.status=STATUS_BAD;
                             else{
 //                                areaCheck=false;
                             }
                             break;
                         case Yellow:
                             if(((350*50)-tBox.size.area())<3000)
-                                tBox.status=STATUS_MEDIUMSIDE;
+                                tBox.status=STATUS_GOOD;
                             else{
 //                                areaCheck=false;
                             }
                             break;
                         }
 
-                        if(fabs((tBox.pts[0].x-tBox.pts[1].x)*(tBox.pts[0].x-tBox.pts[1].x)+(tBox.pts[0].y-tBox.pts[1].y)*(tBox.pts[0].y-tBox.pts[1].y))>
-                                fabs((tBox.pts[1].x-tBox.pts[2].x)*(tBox.pts[1].x-tBox.pts[2].x)+(tBox.pts[1].y-tBox.pts[2].y)*(tBox.pts[1].y-tBox.pts[2].y))){
-                            tBox.dir=(tBox.pts[0]-tBox.pts[1]).y<=0?(tBox.pts[0]-tBox.pts[1]):(tBox.pts[1]-tBox.pts[0]);
+                        float l1,l2;
+                        l1=fabs((tBox.pts[0].x-tBox.pts[1].x)*(tBox.pts[0].x-tBox.pts[1].x)+(tBox.pts[0].y-tBox.pts[1].y)*(tBox.pts[0].y-tBox.pts[1].y));
+                        l2=fabs((tBox.pts[1].x-tBox.pts[2].x)*(tBox.pts[1].x-tBox.pts[2].x)+(tBox.pts[1].y-tBox.pts[2].y)*(tBox.pts[1].y-tBox.pts[2].y));
+                        if(l1>l2){
+                            ////
                         }
                         else {
-                            tBox.dir=(tBox.pts[1]-tBox.pts[2]).y<=0?(tBox.pts[1]-tBox.pts[2]):(tBox.pts[2]-tBox.pts[1]);
+                            float t;
+                            t=l1;
+                            l1=l2;
+                            l2=t;
                         }
+
+                        switch(tBox.status){
+                        case STATUS_GOOD:
+                            dir=l1;
+                            break;
+                        case STATUS_MEDIUM:
+                            dir=l2;
+                            break;
+                        case STATUS_BAD:
+                            dir=l2;
+                            break;
+                        }
+
                         if(areaCheck)
                             boxes.push_back(tBox);
+
+
                         ///////push a new box end///////////
                     }
                 }
@@ -730,6 +752,7 @@ bool MyThread::showFrames(){
 //                    cout<<boxes.at(i).center<<","<<boxes.at(i).color<<endl;
                 }
                 resize(check,check,Size(400,400));
+//                imshow("check",check);
                 cvtColor(check,check,COLOR_BGR2RGB);
                 emit pushDepth(check.data,check.cols,check.rows,check.cols*check.channels());
                 ///////make a image to check end//////////
@@ -891,9 +914,10 @@ bool MyThread::showFrames(){
 //        cv::imshow("depth", depthMat / 4096.0f);
 //        cv::imshow("undistorted", depthMatUndistorted / 1024.f);
 //        cv::imshow("registered", rgbdCopy);
-////        usleep(1000);
+//////        usleep(1000);
 //        char c=waitKey(1);
 //        if(c=='g') setBackGround();
+//        else if(c=='r') readParam();
 //        usleep(10000);
         return false;
     }
@@ -997,7 +1021,6 @@ bool MyThread::setBackGround(){
     //        //    pthread_mutex_lock(&mutex);
 //    if(!ifBackGoundSet){
         depthMatUndistorted.copyTo(backGround);
-//        imwrite("backGround.",backGround);
         vector<Point3f> tGroundPoints;
         tGroundPoints.clear();
         tGroundPoints.push_back(Point3f(backGround.cols/2,backGround.rows/2,
@@ -1207,7 +1230,6 @@ void MyThread::readParam(){
     T2O.at<double>(1)=0;
     T2O.at<double>(2)=0;
     cout<<"read Param:"<<R2G<<endl<<T2G<<endl;
-//    backGround=imread("backGround.jpg");
 //    ifBackGroundSet=true;
     ifOriginSet=true;
 }
