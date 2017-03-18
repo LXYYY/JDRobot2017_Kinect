@@ -326,7 +326,7 @@ void MyThread:: kinect()
     libfreenect2::Freenect2Device::Config config;
     config.EnableBilateralFilter=true;
     config.EnableEdgeAwareFilter=true;
-    config.MaxDepth=0.9f;
+    config.MaxDepth=1.f;
     config.MinDepth=0.f;
     dev->setConfiguration(config);
 
@@ -484,7 +484,7 @@ void splitColor(Mat& rgbd,Mat mask){
     }
 }
 
-int thresh1=236,thresh2=400;
+int thresh1=236,thresh2=103;
 bool MyThread::showFrames(){
     try{
 //        cout<<"mode:"<<mode<<endl;
@@ -494,7 +494,7 @@ bool MyThread::showFrames(){
         Mat rgbdCopy;
         rgbd.copyTo(rgbdCopy);
 //        imshow("undistorted",rgbd);
-        cout<<"test:"<<ifBackGroundSet<<","<<ifOriginSet<<endl;
+//        cout<<"test:"<<ifBackGroundSet<<","<<ifOriginSet<<endl;
         if(ifBackGroundSet&&!ifOriginSet){
             cout<<"ifbackgoundset"<<ifBackGroundSet<<endl;
             cout<<"size:"<<groundPtsDepth.size()<<endl;
@@ -655,38 +655,39 @@ bool MyThread::showFrames(){
                         tBox.center=boundingBox.center;
                         tBox.color=tBoxPointsDepth.second;
                         tBox.z=z;
-                        cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl<<"area:"<<tBox.size.area()<<","<<z<<endl;
+                        if(tBox.color==Yellow)
+                            tBox.z=45;
+                        if(tBox.color==Blue)
+                            tBox.z=65;
+                        if(tBox.color==Green)
+                            tBox.z=95;
+                        cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl
+                           <<"area:"<<tBox.size.area()<<","<<z<<endl
+                          <<"center:"<<tBox.center<<endl;
 
                         bool areaCheck=true;
                         switch(tBoxPointsDepth.second){
                         case Green:
-                            if(fabs(tBox.size.area()-(180*150))<3000)
-                                tBox.status=STATUS_BAD;
-                            else if(fabs(tBox.size.area()-(180*70))<3000)
+                            if(fabs(tBox.size.area()-(180*70))<2000)
                                 tBox.status=STATUS_GOOD;
-                            else if(fabs(tBox.size.area()-(150*70))<3000)
-                                tBox.status=STATUS_MEDIUM;
                             else{
-//                                areaCheck=false;
+                                areaCheck=false;
                             }
                             break;
                         case Blue:
-                            if(((180*150)-tBox.size.area())<3000)
+                            if(fabs((180*150)-tBox.size.area())<2000)
                                 tBox.status=STATUS_GOOD;
-                            else if(((180*70)-tBox.size.area())<3000)
-                                tBox.status=STATUS_MEDIUM;
-                            else if(fabs(tBox.size.area()-(150*70))<3000)
-                                tBox.status=STATUS_BAD;
                             else{
-//                                areaCheck=false;
+                                areaCheck=false;
                             }
                             break;
                         case Yellow:
-                            if(((350*50)-tBox.size.area())<3000)
+                            if(fabs((350*150)-tBox.size.area())<3000)
                                 tBox.status=STATUS_GOOD;
                             else{
-//                                areaCheck=false;
+                                areaCheck=false;
                             }
+//                            if(tBox.size.width/tBox.size.height)
                             break;
                         }
 
@@ -695,29 +696,33 @@ bool MyThread::showFrames(){
                         l2=fabs((tBox.pts[1].x-tBox.pts[2].x)*(tBox.pts[1].x-tBox.pts[2].x)+(tBox.pts[1].y-tBox.pts[2].y)*(tBox.pts[1].y-tBox.pts[2].y));
                         if(l1>l2){
                             ////
+                            tBox.dir=tBox.pts[0]-tBox.pts[1];
                         }
                         else {
+                            tBox.dir=tBox.pts[1]-tBox.pts[2];
+
                             float t;
                             t=l1;
                             l1=l2;
                             l2=t;
                         }
+//                        switch(tBox.status){
+//                        case STATUS_GOOD:
+//                            dir=l1;
+//                            break;
+//                        case STATUS_MEDIUM:
+//                            dir=l2;
+//                            break;
+//                        case STATUS_BAD:
+//                            dir=l2;
+//                            break;
+//                        }
 
-                        switch(tBox.status){
-                        case STATUS_GOOD:
-                            dir=l1;
-                            break;
-                        case STATUS_MEDIUM:
-                            dir=l2;
-                            break;
-                        case STATUS_BAD:
-                            dir=l2;
-                            break;
-                        }
-
-                        if(areaCheck)
+                        if(areaCheck
+                            &&fabs(tBox.center.x)<400
+                            &&tBox.center.y<200
+                            &&tBox.center.y>-450)
                             boxes.push_back(tBox);
-
 
                         ///////push a new box end///////////
                     }
@@ -758,6 +763,7 @@ bool MyThread::showFrames(){
                 ///////make a image to check end//////////
 
                 ///////send box centers to communication thread////////
+                float *point=new float[6];
                 if(boxes.size()>0){
                     int tgtId;
                     float minX=1000000,minY=1000000;
@@ -767,17 +773,27 @@ bool MyThread::showFrames(){
                             tgtId=i;
                         }
                     }
-                    float *point=new float[6];
                     point[0]=boxes.at(tgtId).center.x;
                     point[1]=boxes.at(tgtId).center.y;
                     point[2]=boxes.at(tgtId).z;
                     cout<<boxes.at(tgtId).center<<","<<boxes.at(tgtId).z<<endl;
                     cout<<"size:"<<boxes.at(tgtId).size<<endl;
+                    cout<<"color"<<boxes.at(tgtId).color<<endl;
                     point[3]=boxes.at(tgtId).dir.x;
                     point[4]=boxes.at(tgtId).dir.y;
                     point[5]=boxes.at(tgtId).color;
-                    emit sendPoint(Communication::TgtBox,point);
                 }
+                else {
+                    point[0]=0;
+                    point[1]=0;
+                    point[2]=0;
+//                    cout<<boxes.at(tgtId).center<<","<<boxes.at(tgtId).z<<endl;
+//                    cout<<"size:"<<boxes.at(tgtId).size<<endl;
+                    point[3]=0;
+                    point[4]=0;
+                    point[5]=0;
+                }
+                emit sendPoint(Communication::TgtBox,point);
                 /////////send box centers to communication thread end////////
             }
             else if(mode==SEARCH_CASE){
@@ -914,7 +930,7 @@ bool MyThread::showFrames(){
 //        cv::imshow("depth", depthMat / 4096.0f);
 //        cv::imshow("undistorted", depthMatUndistorted / 1024.f);
 //        cv::imshow("registered", rgbdCopy);
-//////        usleep(1000);
+//////////        usleep(1000);
 //        char c=waitKey(1);
 //        if(c=='g') setBackGround();
 //        else if(c=='r') readParam();
@@ -1160,45 +1176,66 @@ void MyThread::setOrigin(){
             groundPts.push_back(center);
         }
     }
-    if(groundPts.size()==2){
+    if(groundPts.size()==3){
 //        vector<Point3f> groundPts3d;
 //        groundPts3d=getBoxPoints3d(groundPts);
 
 
-        Point3f tPt;
-        tPt=convertWorld2Ground(groundPts.at(0));
-        cout<<tPt<<endl;
-        tPt.z=0;
-        tPt=convertGround2World(tPt);
-        groundPtsDepth.push_back(tPt);
-        getBoxPoints3d(tPt);
-        groundPts.push_back(tPt);
-        cout<<tPt<<endl;
+//        Point3f tPt;
+//        tPt=convertWorld2Ground(groundPts.at(0));
+//        cout<<tPt<<endl;
+//        tPt.z=0;
+//        tPt=convertGround2World(tPt);
+//        groundPtsDepth.push_back(tPt);
+//        getBoxPoints3d(tPt);
+//        groundPts.push_back(tPt);
+//        cout<<tPt<<endl;
+
+//        Mat_<double> ptsMat(3, 3);
+//        Mat_<double> tMat(3, 1);
+//        tMat.at<double>(0)=groundPts.at(0).x-groundPts.at(1).x;
+//        tMat.at<double>(1)=groundPts.at(0).y-groundPts.at(1).y;
+//        tMat.at<double>(2)=groundPts.at(0).z-groundPts.at(1).z;
+//        cout<<"y"<<tMat<<endl;
+//        tMat/=norm(tMat);
+//        tMat.copyTo(ptsMat.col(1));
+
+//        tMat.at<double>(0)=groundPts.at(0).x-groundPts.at(2).x;
+//        tMat.at<double>(1)=groundPts.at(0).y-groundPts.at(2).y;
+//        tMat.at<double>(2)=groundPts.at(0).z-groundPts.at(2).z;
+//        tMat/=norm(tMat);
+//        cout<<"z"<<tMat<<endl;
+//        tMat.copyTo(ptsMat.col(2));
+
+//        tMat=ptsMat.col(1).cross(ptsMat.col(2));
+//        cout<<"x"<<tMat<<endl;
+//        tMat/=norm(tMat);
+//        tMat.copyTo(ptsMat.col(0));
 
         Mat_<double> ptsMat(3, 3);
         Mat_<double> tMat(3, 1);
         tMat.at<double>(0)=groundPts.at(0).x-groundPts.at(1).x;
         tMat.at<double>(1)=groundPts.at(0).y-groundPts.at(1).y;
         tMat.at<double>(2)=groundPts.at(0).z-groundPts.at(1).z;
-        cout<<"y"<<tMat<<endl;
-        tMat/=norm(tMat);
-        tMat.copyTo(ptsMat.col(1));
-
-        tMat.at<double>(0)=groundPts.at(0).x-groundPts.at(2).x;
-        tMat.at<double>(1)=groundPts.at(0).y-groundPts.at(2).y;
-        tMat.at<double>(2)=groundPts.at(0).z-groundPts.at(2).z;
-        tMat/=norm(tMat);
         cout<<"z"<<tMat<<endl;
+        tMat/=norm(tMat);
         tMat.copyTo(ptsMat.col(2));
 
-        tMat=ptsMat.col(1).cross(ptsMat.col(2));
+        tMat.at<double>(0)=groundPts.at(2).x-groundPts.at(1).x;
+        tMat.at<double>(1)=groundPts.at(2).y-groundPts.at(1).y;
+        tMat.at<double>(2)=groundPts.at(2).z-groundPts.at(1).z;
+        cout<<"y"<<tMat<<endl;
+        tMat/=-norm(tMat);
+        tMat.copyTo(ptsMat.col(1));
+
+        tMat=ptsMat.col(2).cross(ptsMat.col(1));
         cout<<"x"<<tMat<<endl;
-        tMat/=norm(tMat);
+        tMat/=-norm(tMat);
         tMat.copyTo(ptsMat.col(0));
 
-        tMat.at<double>(0)=groundPts.at(2).x;
-        tMat.at<double>(1)=groundPts.at(2).y;
-        tMat.at<double>(2)=groundPts.at(2).z;
+        tMat.at<double>(0)=groundPts.at(1).x;
+        tMat.at<double>(1)=groundPts.at(1).y;
+        tMat.at<double>(2)=groundPts.at(1).z;
         tMat.copyTo(T2G);
 
         R2G=ptsMat;

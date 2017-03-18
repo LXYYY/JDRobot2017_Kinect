@@ -45,7 +45,7 @@ void MainWindow::pushRgbd(unsigned char* imageData,int cols,int rows,int bytesPe
     rgbd=QImage(imageData,cols,rows,bytesPerLine,QImage::Format_RGB32);
     ui->image1->clear();
     ui->image1->setPixmap(QPixmap::fromImage(rgbd));
-    ui->image1->resize(ui->image1->pixmap()->size());
+//    ui->image1->resize(ui->image1->pixmap()->size());
 }
 
 void MainWindow::pushDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine)
@@ -54,7 +54,7 @@ void MainWindow::pushDepth(unsigned char* imageData,int cols,int rows,int bytesP
     depth=QImage(imageData,cols,rows,bytesPerLine,QImage::Format_RGB888);
     ui->image2->clear();
     ui->image2->setPixmap(QPixmap::fromImage(depth));
-    ui->image2->resize(ui->image2->pixmap()->size());
+//    ui->image2->resize(ui->image2->pixmap()->size());
 }
 
 void MainWindow::pushContours(unsigned char* imageData,int cols,int rows,int bytesPerLine){
@@ -182,28 +182,28 @@ void MainWindow::on_Main_Axis_ADJ_valueChanged(int value)
 {
     ui->openGLWidget->joint1.rotate_y = value;
     ui->openGLWidget->needRepaint =true;
-    ui->Main_Axis->display(value);
+//    ui->Main_Axis->display(value);
 }
 
 void MainWindow::on_Horizontal_Axis_ADJ_valueChanged(int value)
 {
     ui->openGLWidget->joint2.trans_x = value;
     ui->openGLWidget->needRepaint =true;
-    ui->Horizontal_Axis->display(value);
+//    ui->Horizontal_Axis->display(value);
 }
 
 void MainWindow::on_Vertical_Axis_ADJ_valueChanged(int value)
 {
     ui->openGLWidget->joint2.trans_y = value;
     ui->openGLWidget->needRepaint =true;
-    ui->Vertical_Axis_Display->display(value);
+//    ui->Vertical_Axis_Display->display(value);
 }
 
 void MainWindow::on_END_Effecter_ADJ1_valueChanged(int value)
 {
     ui->openGLWidget->joint3.rotate_y = value;
     ui->openGLWidget->needRepaint =true;
-    ui->End_Effect_Rotate_1->display(value);
+//    ui->End_Effect_Rotate_1->display(value);
 }
 
 void MainWindow::on_END_Effecter_ADJ2_valueChanged(int value)
@@ -211,7 +211,7 @@ void MainWindow::on_END_Effecter_ADJ2_valueChanged(int value)
 
     ui->openGLWidget->joint4.rotate_z = value;
     ui->openGLWidget->needRepaint =true;
-    ui->End_Effect_Rotate_2->display(value);
+//    ui->End_Effect_Rotate_2->display(value);
 }
 
 void MainWindow::caculateInvers(float x,float y,float z){
@@ -237,10 +237,10 @@ void MainWindow::caculateInvers(float x,float y,float z){
 
 //    qDebug("a2:%f",2*atan(sqrt(x + (x*x + z*z))/z));
 
-    ui->End_Effect_Rotate_1->display(ui->openGLWidget->joint3.rotate_y);
-    ui->Vertical_Axis_Display->display(ui->openGLWidget->joint2.trans_y);
-    ui->Horizontal_Axis->display(ui->openGLWidget->joint2.trans_x);
-    ui->Main_Axis->display(ui->openGLWidget->joint1.rotate_y);
+//    ui->End_Effect_Rotate_1->display(ui->openGLWidget->joint3.rotate_y);
+//    ui->Vertical_Axis_Display->display(ui->openGLWidget->joint2.trans_y);
+//    ui->Horizontal_Axis->display(ui->openGLWidget->joint2.trans_x);
+//    ui->Main_Axis->display(ui->openGLWidget->joint1.rotate_y);
 
 
 }

@@ -20,6 +20,7 @@ bool Communication::setFrame(unsigned char id, float x, float y, float z,float d
     frame.dir=atan(dirY/dirX);
     cout<<"dir:"<<frame.dir<<endl;
     frame.color=color;
+//    cout<<"test:"<<(int)frame.color<<endl;
 //    frame.Tail1=TAIL1;
 //    frame.Tail2=TAIL2;
     return true;
