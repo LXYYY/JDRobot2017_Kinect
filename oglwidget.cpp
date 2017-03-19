@@ -6,8 +6,7 @@
 #include "QTimer"
 #include "GL/gl.h"
 using namespace std;
-typedef float HOM_MAT[16];
-typedef float HOM_Vect[4];
+
 
 HOM_MAT a;
 #define PI 3.1415926
@@ -432,15 +431,5 @@ void OGLWidget:: TimeBasedPaint(){
         needRepaint = false;
     }
 
-    USB_Trans_TypeDef USB_trans;
-
-    if(serialReady){
-    USB_trans.Servo_Motor_Pitch_Angle = (joint3.rotate_y/360.f)*2000.f+500;
-    USB_trans.Servo_Motor_Yaw_Angle = (joint4.rotate_z/360.f)*2000.f+500;
-    serial->write((char*)&USB_trans,sizeof(USB_Trans_TypeDef));
-
-//    qDebug("TransMit");
-
-    }
 
 }

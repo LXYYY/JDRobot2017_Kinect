@@ -10,16 +10,21 @@
 #include "QTcpServer"
 #include "qtcpsocket.h"
 #include "globject.h"
-#include "globject.h"
 #include "Threads/Threads.h"
-using namespace std;
+#include "cmdsender.h"
+#include "qsemaphore.h"
 
+using namespace std;
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 Dialog *w;
 
+CmdSender csender;
+QSemaphore cmdsemaphore(0);
 QSerialPort *serial;
 QTcpServer *server;
+static uint8_t cmd_id = 0;
+
 void MainWindow:: acceptConnection()
 {
     QTcpSocket *_tmpSocket= server->nextPendingConnection();
@@ -66,38 +71,40 @@ void MainWindow::pushProj(unsigned char* imageData,int cols,int rows,int bytesPe
 
 }
 
-void MainWindow::draw1Point(float *points, int size){
-//    uint32_t size = ui->openGLWidget->points.size();
-//    for(int i=0;i<(int32_t)(id-size+1);i++){
-//        float* _tmp = new float[3];
-//        ui->openGLWidget->points.push_back(_tmp);
-//        qDebug("ID:%d,i:%d point size:%d",id,i,size);
-//    }
-//    qDebug("draw points");
-//    cout<<"size="<<size<<endl;
-    for(size_t i=0;i<ui->openGLWidget->points.size();i++){
-        delete[] ui->openGLWidget->points.at(i);
-    }
-    ui->openGLWidget->points.clear();
-    for(size_t i=0;i<size;i++){
-        float *tpoints = new float[3];
-        tpoints[0]=points[(i-1)*3+0];
-        tpoints[1]=points[(i-1)*3+1];
-        tpoints[2]=points[(i-1)*3+2];
-        ui->openGLWidget->points.push_back(tpoints);
-//        delete tpoints;
-////        if(tpoints[0]==0&&tpoints[1]==0){
-////            cout<<"drawPoints:"<<tpoints[0]<<","<<tpoints[1]<<","<<tpoints[2]<<endl;
-////        }
-    }
-//    cout<<"drawPointsize:"<<ui->openGLWidget->points.size()<<endl;
-//    for(size_t i=0;i<ui->openGLWidget->points.size();i++){
-//        cout<<ui->openGLWidget->points.at(i)[0]<<","
-//             <<ui->openGLWidget->points.at(i)[1]<<","
-//            <<ui->openGLWidget->points.at(i)[2]<<","<<endl;
-//    }
-    ui->openGLWidget->needRepaint = true;
+HOM_Vect ori = {0,0,0,1};
+float  world[5] = {0,0,0,0,0};
+
+float frameRotate;
+void MainWindow::drawPoint(ReadData_Transform* data){
+        frameRotate = (90-ui->openGLWidget->Real_Para.Main_Axis)/180.f*M_PI;
+        ori[0]=data->x;
+        ori[1]=data->y;
+        ori[2]=data->z;
+        world[4] = data->color;
+        world[0] =  ori[0]*cos(frameRotate)+(ori[1]+660)*sin(frameRotate);
+        world[1] = -ori[0]*sin(frameRotate)+(ori[1]+660)*cos(frameRotate);
+        world[2] =  data->z;
+        world[3] = -(90-(data->vx)/M_PI*180-ui->openGLWidget->Real_Para.Main_Axis);
+        ui->openGLWidget->p1[0]=world[0];
+        ui->openGLWidget->p1[1]=world[1];
+        ui->openGLWidget->p1[2]=world[2];
+        ui->openGLWidget->needRepaint = true;
 }
+
+
+
+void MainWindow::setBackgroundColor(QWidget *widget,QColor color){
+
+       QPalette _Palette = widget->palette();
+       widget->setAutoFillBackground(true);
+       _Palette.setColor(QPalette::Background,color);
+       widget->setPalette(_Palette);
+}
+
+
+
+
+
 MyThread* myThread;
 Communication* communicator;
 MainWindow::MainWindow(QWidget *parent) :
@@ -106,9 +113,14 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     //
     ui->setupUi(this);
-    //processer = new cvProcesser();
-    connect(ui->openGLWidget,SIGNAL(update_mat_info(float*,int )),this,SLOT(update_mat_display(float*,int )));
 
+    qRegisterMetaType<OGLWidget::para_Def>("OGLWidget::para_Def");
+    //processer = new cvProcesser();
+
+
+   // connect(&csender,SIGNAL(para_display(OGLWidget::para_Def)),this,SLOT(para_display(OGLWidget::para_Def)));
+    //connect(&csender,SIGNAL(uart_send(OGLWidget::para_Def*)),this,SLOT(Uart_Send(OGLWidget::para_Def*)));
+    //connect(&csender,SIGNAL(one_box_finish()),this,SLOT(One_Box_Finish()));
     w = new Dialog(this);
     server = new QTcpServer();
     server->listen(QHostAddress::Any, 6000);
@@ -119,12 +131,8 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         QSerialPort serial;
         serial.setPort(info);
-        if(serial.open(QIODevice::ReadWrite))
-        {
-            ui->comboBox->addItem(serial.portName());
-            serial.close();
-            ui->startPort_Button->setEnabled(true);
-        }
+        ui->comboBox->addItem(serial.portName());
+        ui->startPort_Button->setEnabled(true);
     }
 
     //ui->openGLWidget->object.push_back(gLObject::DrawPoint(1,1,1));
@@ -150,27 +158,48 @@ MainWindow::MainWindow(QWidget *parent) :
     communicator->start();
 }
 
+USB_Trans_TypeDef USB_trans;
+void MainWindow::Uart_Send(OGLWidget::para_Def *_para){
+
+
+
+    qDebug("Uart Trans Main %f,Horizontal %f,Vertial%f",_para->Main_Axis,_para->Horizontal_Axis,_para->Vertial_Axis);
+
+    MAX_LIMMIT(_para->END_EFFECTOR_Pitch,90);
+    MIN_LIMMIT(_para->END_EFFECTOR_Pitch,-90);
+
+    MAX_LIMMIT(_para->END_EFFECTOR_YAW,90);
+    MIN_LIMMIT(_para->END_EFFECTOR_YAW,-90);
+//  MAX_LIMMIT(Aim_Para.Main_Axis,180);
+//  MIN_LIMMIT(Aim_Para.Main_Axis,-180);
+    MAX_LIMMIT(_para->Horizontal_Axis,713);
+    MIN_LIMMIT(_para->Horizontal_Axis,293);
+    MAX_LIMMIT(_para->Vertial_Axis,0);
+    MIN_LIMMIT(_para->Vertial_Axis,-400);
+
+    USB_trans.head1 = 0xa5;
+    USB_trans.head2 = 0x5a;
+    USB_trans.END_EFFECTOR_Pitch = (float)_para->END_EFFECTOR_Pitch;
+    USB_trans.END_EFFECTOR_YAW = (float)_para->END_EFFECTOR_YAW;
+    USB_trans.Main_Axis_Rotate =(float) _para->Main_Axis;
+    USB_trans.Horizontal_Axis = (float)_para->Horizontal_Axis;
+    USB_trans.Vertial_Axis = (float)_para->Vertial_Axis;
+    USB_trans.status.Horizontal_Axis = 1;
+    USB_trans.status.Vertial_Axis = 1;
+    USB_trans.status.Main_Axis_Rotate = 1;
+    USB_trans.PUMB = _para->pumb;
+    USB_trans.VALVE = _para->valve;
+    USB_trans.CMD_ID = cmd_id++;
+    qDebug("Send CMD ID%d",USB_trans.CMD_ID);
+    serial->write((const char *)&USB_trans,sizeof(USB_Trans_TypeDef));
+
+}
+
 MainWindow::~MainWindow()
 {
     delete ui;
 }
 
-
-void MainWindow::update_mat_display(float  mat[16],int index ){
-
-//    // ui->tableWidget->setItem(1,1,new QTableWidgetItem("123"));
-
-//    for(int i=0;i<4;i++){
-
-//        for(int j=0;j<4;j++){
-
-//            ui->tableWidget->setItem(i+index*5,j,new QTableWidgetItem(QString().sprintf("%4.2f",mat[i*4+j])));
-//        }
-
-//    }
-
-
-}
 void MainWindow::repaint(){
 
 //    ui->tableWidget->horizontalHeader()->setFixedWidth(ui->tableWidget->width()/4);
@@ -178,100 +207,52 @@ void MainWindow::repaint(){
 }
 
 
-void MainWindow::on_Main_Axis_ADJ_valueChanged(int value)
-{
-    ui->openGLWidget->joint1.rotate_y = value;
-    ui->openGLWidget->needRepaint =true;
-//    ui->Main_Axis->display(value);
-}
-
-void MainWindow::on_Horizontal_Axis_ADJ_valueChanged(int value)
-{
-    ui->openGLWidget->joint2.trans_x = value;
-    ui->openGLWidget->needRepaint =true;
-//    ui->Horizontal_Axis->display(value);
-}
-
-void MainWindow::on_Vertical_Axis_ADJ_valueChanged(int value)
-{
-    ui->openGLWidget->joint2.trans_y = value;
-    ui->openGLWidget->needRepaint =true;
-//    ui->Vertical_Axis_Display->display(value);
-}
-
-void MainWindow::on_END_Effecter_ADJ1_valueChanged(int value)
-{
-    ui->openGLWidget->joint3.rotate_y = value;
-    ui->openGLWidget->needRepaint =true;
-//    ui->End_Effect_Rotate_1->display(value);
-}
-
-void MainWindow::on_END_Effecter_ADJ2_valueChanged(int value)
-{
-
-    ui->openGLWidget->joint4.rotate_z = value;
-    ui->openGLWidget->needRepaint =true;
-//    ui->End_Effect_Rotate_2->display(value);
-}
-
-void MainWindow::caculateInvers(float x,float y,float z){
-
-    float tx,tz;
-    tx = x;
-    tz = z;
-
-    //   x = tx*sin(ui->Rotate->value()/180.f*3.1415926)+tz*cos(ui->Rotate->value()/180.f*3.1415926);
-    //   z = tx*cos(ui->Rotate->value()/180.f*3.1415926)-tz*sin(ui->Rotate->value()/180.f*3.1415926);
-
-    x-=cos(ui->Rotate->value()/180.f*3.1415926)*108.33;
-    z+=sin(ui->Rotate->value()/180.f*3.1415926)*108.33;
-
-    ui->openGLWidget->joint1.rotate_y = 2*atan((x + sqrt(x*x + z*z))/z)/3.1415926*180.f;
-    ui->openGLWidget->joint3.rotate_y = ui->Rotate->value()-ui->openGLWidget->joint1.rotate_y;
-    ui->openGLWidget->joint2.trans_x  = sqrt(x*x + z*z);
-    ui->openGLWidget->joint2.trans_y  = 71317/100 - y;
-    ui->openGLWidget->needRepaint = true;
 
 
-//    qDebug("x:%f,y:%f,Z:%f",x,y,z);
 
-//    qDebug("a2:%f",2*atan(sqrt(x + (x*x + z*z))/z));
+OGLWidget::para_Def MainWindow::caculateInvers(float x,float y,float z,float rotate){
 
-//    ui->End_Effect_Rotate_1->display(ui->openGLWidget->joint3.rotate_y);
-//    ui->Vertical_Axis_Display->display(ui->openGLWidget->joint2.trans_y);
-//    ui->Horizontal_Axis->display(ui->openGLWidget->joint2.trans_x);
-//    ui->Main_Axis->display(ui->openGLWidget->joint1.rotate_y);
+   OGLWidget::para_Def _para;
 
+   qDebug("World Position %f,%f,%f,%f",x,y,z,rotate);
 
+   _para.Main_Axis = 2*atan2((x + sqrt(x*x + y*y)),y)/3.1415926*180.f;
+
+   if(_para.Main_Axis>180)
+       _para.Main_Axis = _para.Main_Axis-360;
+
+   _para.END_EFFECTOR_YAW =(180+(rotate)-_para.Main_Axis);
+   if(_para.END_EFFECTOR_YAW>90)
+      _para.END_EFFECTOR_YAW-=180;
+   qDebug("Caculate Main_Axis %f",_para.Main_Axis);
+   //ui->doubleSpinBox_4->setValue(ui->openGLWidget->Aim_Para.END_EFFECTOR_YAW);
+   _para.Horizontal_Axis  = sqrt(x*x + y*y);
+   _para.Vertial_Axis  =  z-450;
+   ui->openGLWidget->needRepaint = true;
+   qDebug("x:%f,y:%f,Z:%f,Angle:%f",x,y,z,_para.END_EFFECTOR_YAW);
+   qDebug("Calculate Horizontal_Axis:%f,Vertial_Axis:%f,Main_Axis:%f",ui->openGLWidget->Aim_Para.Horizontal_Axis,ui->openGLWidget->Aim_Para.Vertial_Axis,ui->openGLWidget->Aim_Para.Main_Axis);
+   qDebug("Yaw:%f",_para.END_EFFECTOR_YAW);
+   return _para;
 }
 
 
-void MainWindow::on_Move_X_valueChanged(int value)
-{
-    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
+//void MainWindow::on_Move_X_valueChanged(int value)
+//{
+//    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
 
-}
+//}
 
-void MainWindow::on_Move_Y_valueChanged(int value)
-{
-    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
+//void MainWindow::on_Move_Y_valueChanged(int value)
+//{
+//    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
 
-}
+//}
 
-void MainWindow::on_Move_z_valueChanged(int value)
-{
-    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
+//void MainWindow::on_Move_z_valueChanged(int value)
+//{
+//    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
 
-}
-
-void MainWindow::timeup(){
-
-    static float x,y,z;
-
-
-    caculateInvers(cos(x+=0.1)*500+500,0,sin(y+=0.1)*500+500);
-
-}
+//}
 
 void MainWindow::on_pushButton_clicked()
 {
@@ -304,11 +285,6 @@ void MainWindow::on_startPort_Button_clicked()
         //设置流控制
         serial->setFlowControl(QSerialPort::NoFlowControl);
         //关闭设置菜单使能
-        //           ui->PortBox->setEnabled(false);
-        //           ui->BaudBox->setEnabled(false);
-        //           ui->BitNumBox->setEnabled(false);
-        //           ui->ParityBox->setEnabled(false);
-        //           ui->StopBox->setEnabled(false);
         ui->startPort_Button->setText(tr("关闭串口"));
         // ui->sendButton->setEnabled(true);
         // //连接信号槽
@@ -328,18 +304,6 @@ void MainWindow::on_startPort_Button_clicked()
         ui->openGLWidget->serialReady = false;
 
     }
-
-}
-
-
-
-USB_Trans_TypeDef ReceiveBuffer;
-void MainWindow::Read_Data(){
-    char *data = (char*)&ReceiveBuffer;
-    serial->read(data,sizeof(USB_Trans_TypeDef));
-
-
-//    qDebug("%f,%f",ReceiveBuffer.Servo_Motor_Pitch_Angle,ReceiveBuffer.Servo_Motor_Yaw_Angle);
 
 }
 
@@ -385,10 +349,87 @@ void MainWindow::on_solid_control_button_clicked()
 
 void MainWindow::on_Rotate_valueChanged(int value)
 {
-    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
+    //caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
 }
 
 
+USB_Trans_TypeDef ReceiveBuffer2;
+void MainWindow::Read_Data(){
+
+    static unsigned int HeadErrCount=0,SumErrCount=0;
+
+       char *data = (char*)&ReceiveBuffer2;
+       serial->read(data,sizeof(USB_Trans_TypeDef));
+
+       if(((unsigned char*)data)[0]!=0xa5||((unsigned char*)data)[1]!=0x5a){
+
+
+          // qDebug("Head Error");
+            HeadErrCount++;
+      //      ui->Box_Info_2->setText(QString().sprintf("Head Err:%d,SumErr:%d",HeadErrCount,SumErrCount));
+
+           return ;
+       }
+        uint8_t sum = 0;
+        sum = 0;
+       for(int i=1;i<(sizeof(USB_Trans_TypeDef)-1);i++){
+
+        sum+= ((unsigned char*)data)[i];
+       }
+       if(sum!=ReceiveBuffer2.sum){
+
+          // qDebug("SUM Error %d",sum);
+           SumErrCount++;
+           //ui->Box_Info_2->setText(QString().sprintf("Head Err:%d,SumErr:%d",HeadErrCount,SumErrCount));
+           return ;
+
+       }
+
+//       ui->openGLWidget->Real_Para.Horizontal_Axis = ReceiveBuffer2.Horizontal_Axis;
+//       ui->openGLWidget->needRepaint =true;
+//       ui->Horizontal_Axis->display(ui->openGLWidget->Real_Para.Horizontal_Axis);
+//       ui->openGLWidget->Real_Para.Vertial_Axis = ReceiveBuffer2.Vertial_Axis;
+//       ui->Vertical_Axis_Display->display(ui->openGLWidget->Real_Para.Vertial_Axis);
+//       ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch = ReceiveBuffer2.END_EFFECTOR_Pitch;
+//       ui->END_EFFECTOR_Pitch->display(ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch);
+//       ui->openGLWidget->Real_Para.END_EFFECTOR_YAW = ReceiveBuffer2.END_EFFECTOR_YAW;
+//       ui->END_EFFECTOR_YAW->display( ui->openGLWidget->Real_Para.END_EFFECTOR_YAW);
+//       ui->openGLWidget->Real_Para.Main_Axis = ReceiveBuffer2.Main_Axis_Rotate;
+//       ui->Main_Axis->display( ui->openGLWidget->Real_Para.Main_Axis);
+//       (ReceiveBuffer2.status.Main_Axis_Rotate)? setBackgroundColor(ui->Main_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Main_Axis,QColor(0,255,0,255));
+//       (ReceiveBuffer2.status.Horizontal_Axis)? setBackgroundColor(ui->Horizontal_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Horizontal_Axis,QColor(0,255,0,255));
+//       (ReceiveBuffer2.status.Vertial_Axis)? setBackgroundColor(ui->Vertical_Axis_Display,QColor(255,0,0,255)): setBackgroundColor(ui->Vertical_Axis_Display,QColor(0,255,0,255));
+//       (ReceiveBuffer2.status.END_EFFECTOR_YAW)? setBackgroundColor(ui->END_EFFECTOR_YAW,QColor(255,0,0,255)): setBackgroundColor(ui->END_EFFECTOR_YAW,QColor(0,255,0,255));
+//       (ReceiveBuffer2.status.END_EFFECTOR_Pitch)? setBackgroundColor(ui->END_EFFECTOR_Pitch,QColor(255,0,0,255)): setBackgroundColor(ui->END_EFFECTOR_Pitch,QColor(0,255,0,255));
+       uint8_t check=0;
+        for(int i=0;i<5;i++){
+           check+=((uint8_t *)(&ReceiveBuffer2.status))[i];
+        }
+        if(check==0){
+
+            if(cmdsemaphore.available()==0&&((cmd_id-1)==ReceiveBuffer2.CMD_ID)&&csender.StartWaitForFinish)
+            {
+
+                if(csender.mutex.tryLock()){
+                csender.StartWaitForFinish = false;
+                qDebug("Trans CMD_ID %d Receive CMD_ID %d",cmd_id-1,ReceiveBuffer2.CMD_ID);
+                qDebug("sendsemaphore count %d",cmdsemaphore.available());
+                cmdsemaphore.release();
+                csender.mutex.unlock();
+                }
+            }
+        }
+}
+
+void MainWindow::para_display(OGLWidget::para_Def _para){
+
+//    ui->Main_Axis->display(_para.Main_Axis);
+//    ui->Horizontal_Axis->display(_para.Horizontal_Axis);
+//    ui->Vertical_Axis_Display->display(_para.Vertial_Axis);
+//    ui->END_EFFECTOR_YAW->display(_para.END_EFFECTOR_YAW);
+//    ui->END_EFFECTOR_Pitch->display(_para.END_EFFECTOR_Pitch);
+
+}
 
 void MainWindow:: tttest(){
 

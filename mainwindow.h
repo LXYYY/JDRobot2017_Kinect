@@ -7,6 +7,8 @@
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <iostream>
+#include "clientclass.h"
+#include "oglwidget.h"
 using namespace std;
 namespace Ui {
 class MainWindow;
@@ -30,36 +32,22 @@ public:
 
 private slots:
 
-
     void  acceptConnection();
 
-    void update_mat_display(float*,int index);
+   // void update_mat_display(float*,int index);
 
     void repaint();
 
-    void draw1Point(float* points, int size);
+    void drawPoint(ReadData_Transform* data);
 
-    void on_Main_Axis_ADJ_valueChanged(int value);
+    void para_display(OGLWidget::para_Def);
 
-    void on_Horizontal_Axis_ADJ_valueChanged(int value);
+    void Uart_Send(OGLWidget::para_Def *);
 
-    void on_Vertical_Axis_ADJ_valueChanged(int value);
-
-    void on_END_Effecter_ADJ1_valueChanged(int value);
-
-    void on_END_Effecter_ADJ2_valueChanged(int value);
-
-    void on_Move_X_valueChanged(int value);
-
-    void on_Move_Y_valueChanged(int value);
-
-    void on_Move_z_valueChanged(int value);
-
-    void caculateInvers(float x,float y,float z);
+    OGLWidget::para_Def caculateInvers(float x,float y,float z,float rotate);
 
     void on_pushButton_clicked();
 
-    void timeup();
     void on_pushButton_2_clicked();
 
     void on_startPort_Button_clicked();
@@ -96,6 +84,9 @@ signals:
     void readParam();
     void reconnect();
 private:
+
+    void setBackgroundColor(QWidget *widget,QColor color);
+
     Ui::MainWindow *ui;
 };
 

@@ -9,9 +9,8 @@ ClientClass::ClientClass(QTcpSocket *client)
 {
 
     this->clientConnection = client;
-    IPAddress = client->peerAddress().toString();
-    this->car_info.shootSpeed = 0;
-    car_info.ShootCount = 0;
+    //this->car_info.shootSpeed = 0;
+    //car_info.ShootCount = 0;
     timer = new QTimer(this);
     connect(timer,SIGNAL(timeout()),this,SLOT(PackageCheck()));
     //timer->start(2000);
@@ -43,11 +42,6 @@ union FT_union
     float f;
 }FT;
 
-typedef struct{
-    float x;
-    float y;
-    float z;
-}ReadData_Transform;
 ReadData_Transform *rt;
 float p1[3];
 float p2[3];
@@ -79,6 +73,6 @@ void ClientClass::readClient()
 }
 
 void ClientClass::ClientDisConnected(){
-    emit updateText(CarName+QString::fromLocal8Bit("退出登录\n"));
+    //emit updateText(CarName+QString::fromLocal8Bit("退出登录\n"));
    // sound1.play();
 }

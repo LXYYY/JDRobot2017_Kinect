@@ -13,6 +13,10 @@
 //#include "globject.h"
 //#include "vector"
 
+typedef float HOM_MAT[16];
+typedef float HOM_Vect[4];
+#define MAX_LIMMIT(x,max)  x = ((x>max)?max:x)
+#define MIN_LIMMIT(x,min)  x = ((x<min)?min:x)
 
 
 using namespace std;
@@ -29,11 +33,48 @@ typedef struct {
 }joint;
 
 
+
 typedef struct{
 
-        float Servo_Motor_Pitch_Angle;
-        float Servo_Motor_Yaw_Angle;
-        uint16_t DC_Motor_H1_Distance;
+    uint8_t Main_Axis_Rotate;
+
+    uint8_t Horizontal_Axis;
+
+    uint8_t Vertial_Axis;
+
+    uint8_t END_EFFECTOR_YAW;
+
+    uint8_t END_EFFECTOR_Pitch;
+
+}InPlace_Flag;
+
+
+
+typedef struct{
+
+
+    unsigned char head1;
+    unsigned char head2;
+
+    uint8_t CMD_ID;
+
+    float Main_Axis_Rotate;
+
+    float Horizontal_Axis;
+
+    float Vertial_Axis;
+
+    float END_EFFECTOR_YAW;
+
+    float END_EFFECTOR_Pitch;
+
+    unsigned char PUMB;
+
+    unsigned char VALVE;
+
+    InPlace_Flag status;
+
+    unsigned char sum;
 
 }USB_Trans_TypeDef;
 
@@ -57,6 +98,25 @@ public:
         float y;
         float z;
     }Draw_point;
+
+
+    typedef struct{
+
+        float Horizontal_Axis;
+        float Vertial_Axis;
+        float Main_Axis;
+        float END_EFFECTOR_YAW;
+        float END_EFFECTOR_Pitch;
+        uint8_t pumb;
+        uint8_t valve;
+        uint8_t CMD_ID; //用于心跳包检测的ID
+        unsigned int DelayTime;
+        unsigned char color;
+
+    }para_Def;
+    para_Def Real_Para;
+    para_Def Aim_Para;
+
 
     double test;
     double value2;

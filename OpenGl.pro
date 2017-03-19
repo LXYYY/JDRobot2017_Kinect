@@ -24,6 +24,7 @@ SOURCES += main.cpp\
     Communicate/Communication.cpp \
     Threads/Threads.cpp \
     AprilTagsClass/AprilTagsClass.cpp \
+    cmdsender.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -34,7 +35,8 @@ HEADERS  += mainwindow.h \
     globject.h \
     Communicate/SocketClass/SocketClass.h \
     Communicate/Communication.h \
-    Threads/Threads.h
+    Threads/Threads.h \
+    cmdsender.h
     AprilTagsClass/AprilTagsClass.h
 
 
