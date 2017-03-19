@@ -100,6 +100,12 @@
               <verstretch>1</verstretch>
              </sizepolicy>
             </property>
+            <property name="maximumSize">
+             <size>
+              <width>320</width>
+              <height>240</height>
+             </size>
+            </property>
             <property name="text">
              <string>TextLabel</string>
             </property>
@@ -130,6 +136,13 @@
           </sizepolicy>
          </property>
          <layout class="QGridLayout" name="gridLayout">
+          <item row="8" column="0">
+           <widget class="QPushButton" name="pushButton_3">
+            <property name="text">
+             <string>settext</string>
+            </property>
+           </widget>
+          </item>
           <item row="6" column="0">
            <widget class="QPushButton" name="chageImages">
             <property name="sizePolicy">
@@ -169,20 +182,7 @@
             </property>
            </widget>
           </item>
-          <item row="8" column="0">
-           <widget class="QPushButton" name="pubm_Contorl_Button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>开气泵</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="0">
+          <item row="9" column="0">
            <widget class="QPushButton" name="pushButton_2">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
@@ -192,19 +192,6 @@
             </property>
             <property name="text">
              <string>设置</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="0">
-           <widget class="QPushButton" name="solid_control_button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>开电磁阀</string>
             </property>
            </widget>
           </item>

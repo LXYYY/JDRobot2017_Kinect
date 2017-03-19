@@ -15,6 +15,11 @@ public:
     explicit Dialog(QWidget *parent = 0);
     ~Dialog();
 
+
+public slots:
+
+    void SetText();
+
 private:
     Ui::Dialog *ui;
 };

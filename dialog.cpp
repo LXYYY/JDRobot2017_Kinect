@@ -6,9 +6,19 @@ Dialog::Dialog(QWidget *parent) :
     ui(new Ui::Dialog)
 {
     ui->setupUi(this);
+
+
+
 }
 
 Dialog::~Dialog()
 {
     delete ui;
+}
+
+
+void Dialog::SetText(){
+
+    //ui->pushButton->setText("string");
+
 }

@@ -10,7 +10,7 @@ pthread_mutex_t mutex;
 
 #include<QDebug>
 
-
+//#define DEBUG
 /*
  * This file is part of the OpenKinect Project. http://www.openkinect.org
  *
@@ -558,15 +558,21 @@ bool MyThread::showFrames(){
                 GaussianBlur(rgbdGray,rgbdGray,Size(5,5),0);
 //                splitColor(rgbdGray,binaryMat);
                 cvtColor(rgbdGray,rgbdGray,COLOR_BGR2GRAY);
-//                imshow("rgbdGray",rgbdGray);
+#ifdef DEBUG
+                imshow("rgbdGray",rgbdGray);
+#endif
                 Canny(rgbdGray,canny,thresh1,thresh2,3);
-//                imshow("canny",canny);
+#ifdef DEBUG
+                imshow("canny",canny);
+#endif
                 vector<Vec4i> hierarchy;
                 vector<vector<Point> > edges;
                 findContours(canny,edges,RETR_TREE,CHAIN_APPROX_SIMPLE);
                 drawContours(binaryMat,edges,-1,Scalar(0),3);
-//                imshow("test",binaryMat);
-//                usleep(10000);
+#ifdef DEBUG
+                imshow("test",binaryMat);
+#endif
+                //                usleep(10000);
 
 
 
@@ -647,6 +653,7 @@ bool MyThread::showFrames(){
                             z+=tBoxPoints3dG.at(i).z;
                         }
                         z/=tBoxPoints3dG.size();
+                        cout<<"test1"<<endl;
                         if(proj2ZPts.size()<4) continue;
                         RotatedRect boundingBox=minAreaRect(proj2ZPts);
 
@@ -656,11 +663,11 @@ bool MyThread::showFrames(){
                         tBox.color=tBoxPointsDepth.second;
                         tBox.z=z;
                         if(tBox.color==Yellow)
-                            tBox.z=45;
+                            tBox.z=30;
                         if(tBox.color==Blue)
-                            tBox.z=65;
+                            tBox.z=50;
                         if(tBox.color==Green)
-                            tBox.z=95;
+                            tBox.z=80;
                         cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl
                            <<"area:"<<tBox.size.area()<<","<<z<<endl
                           <<"center:"<<tBox.center<<endl;
@@ -668,7 +675,7 @@ bool MyThread::showFrames(){
                         bool areaCheck=true;
                         switch(tBoxPointsDepth.second){
                         case Green:
-                            if(fabs(tBox.size.area()-(180*70))<2000)
+                            if(fabs(tBox.size.area()-(180*70))<3000)
                                 tBox.status=STATUS_GOOD;
                             else{
                                 areaCheck=false;
@@ -719,9 +726,9 @@ bool MyThread::showFrames(){
 //                        }
 
                         if(areaCheck
-                            &&fabs(tBox.center.x)<400
+/*                            &&fabs(tBox.center.x)<400
                             &&tBox.center.y<200
-                            &&tBox.center.y>-450)
+                            &&tBox.center.y>-450*/)
                             boxes.push_back(tBox);
 
                         ///////push a new box end///////////
@@ -757,7 +764,9 @@ bool MyThread::showFrames(){
 //                    cout<<boxes.at(i).center<<","<<boxes.at(i).color<<endl;
                 }
                 resize(check,check,Size(400,400));
-//                imshow("check",check);
+#ifdef DEBUG
+                imshow("check",check);
+#endif
                 cvtColor(check,check,COLOR_BGR2RGB);
                 emit pushDepth(check.data,check.cols,check.rows,check.cols*check.channels());
                 ///////make a image to check end//////////
@@ -768,10 +777,16 @@ bool MyThread::showFrames(){
                     int tgtId;
                     float minX=1000000,minY=1000000;
                     for(size_t i=0;i<boxes.size();i++){
-                        if(fabs(boxes.at(i).center.x)<minX){
-                            minX=fabs(boxes.at(i).center.x);
-                            tgtId=i;
-                        }
+                        if(nCircle==0)
+                            if((boxes.at(i).color==2||boxes.at(i).color==3)&&fabs(boxes.at(i).center.x)<minX){
+                                minX=fabs(boxes.at(i).center.x);
+                                tgtId=i;
+                            }
+                        else if(nCircle>0)
+                            if(fabs(boxes.at(i).center.x)<minX){
+                                minX=fabs(boxes.at(i).center.x);
+                                tgtId=i;
+                            }
                     }
                     point[0]=boxes.at(tgtId).center.x;
                     point[1]=boxes.at(tgtId).center.y;
@@ -917,23 +932,27 @@ bool MyThread::showFrames(){
 //        cout<<"size:"<<depthMatUndistorted.cols<<","<<depthMatUndistorted.rows<<endl;
 //        cout<<"rgbd:"<<rgbdCopy.cols<<","<<rgbdCopy.rows<<endl;
 //        cout<<"drawing"<<endl;
-        Mat tDepth;
-        tDepth=(depthMatUndistorted/1000.f*255.f);
-        tDepth.convertTo(tDepth,CV_8U);
+//        Mat tDepth;
+//        tDepth=(depthMatUndistorted/1000.f*255.f);
+//        tDepth.convertTo(tDepth,CV_8U);
 //        cout<<"rgbdCopy:"<<rgbdCopy.rows<<","<<rgbdCopy.cols<<endl;\
 //        cout<<"depth:"<<tDepth.rows<<","<<tDepth.cols<<endl;
+        resize(rgbdCopy,rgbdCopy,Size(320,240));
+
         emit pushRgbd(rgbdCopy.data,rgbdCopy.cols,rgbdCopy.rows,rgbdCopy.cols*rgbdCopy.channels());
 //        emit pushDepth(tDepth.data,tDepth.cols,tDepth.rows,tDepth.cols*tDepth.channels());
 
 //        cv::imshow("rgb", rgbMat);
 //        cv::imshow("ir", irMat / 4096.0f);
 //        cv::imshow("depth", depthMat / 4096.0f);
-//        cv::imshow("undistorted", depthMatUndistorted / 1024.f);
-//        cv::imshow("registered", rgbdCopy);
+#ifdef DEBUG
+        cv::imshow("undistorted", depthMatUndistorted / 1024.f);
+        cv::imshow("registered", rgbdCopy);
 //////////        usleep(1000);
-//        char c=waitKey(1);
-//        if(c=='g') setBackGround();
-//        else if(c=='r') readParam();
+        char c=waitKey(1);
+        if(c=='g') setBackGround();
+        else if(c=='r') readParam();
+#endif
 //        usleep(10000);
         return false;
     }
@@ -1121,7 +1140,7 @@ vector<Point3f> MyThread::convertWorld2Ground(vector<Point3f> inputPts){
             tMat.at<double>(2)=inputPts.at(j).z;
             tMat=R2G.inv()*(tMat-T2G)+T2O;
 //            cout<<T2O<<endl;
-            if(tMat.at<double>(2)>=0)
+//            if(tMat.at<double>(2)>=0)
                 tPts.push_back(Point3f(tMat.at<double>(0),tMat.at<double>(1),tMat.at<double>(2)));
         }
         return tPts;

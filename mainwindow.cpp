@@ -13,7 +13,7 @@
 #include "Threads/Threads.h"
 #include "cmdsender.h"
 #include "qsemaphore.h"
-
+#include "calibrator.h"
 using namespace std;
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
@@ -23,6 +23,8 @@ CmdSender csender;
 QSemaphore cmdsemaphore(0);
 QSerialPort *serial;
 QTcpServer *server;
+
+
 static uint8_t cmd_id = 0;
 
 void MainWindow:: acceptConnection()
@@ -104,7 +106,7 @@ void MainWindow::setBackgroundColor(QWidget *widget,QColor color){
 
 
 
-
+Calibrator * calibrator_window;
 MyThread* myThread;
 Communication* communicator;
 MainWindow::MainWindow(QWidget *parent) :
@@ -118,6 +120,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //processer = new cvProcesser();
 
 
+
+
    // connect(&csender,SIGNAL(para_display(OGLWidget::para_Def)),this,SLOT(para_display(OGLWidget::para_Def)));
     //connect(&csender,SIGNAL(uart_send(OGLWidget::para_Def*)),this,SLOT(Uart_Send(OGLWidget::para_Def*)));
     //connect(&csender,SIGNAL(one_box_finish()),this,SLOT(One_Box_Finish()));
@@ -126,6 +130,9 @@ MainWindow::MainWindow(QWidget *parent) :
     server->listen(QHostAddress::Any, 6000);
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("GBK"));
     connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
+
+
+
 
     foreach(const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
@@ -141,6 +148,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     myThread= new MyThread();
     communicator =new Communication();
+
+
+    calibrator_window = new Calibrator(this);
+    connect(calibrator_window,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
+
+
     connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
     //connect(myThread,SIGNAL(drawPoints(float*,size_t)),this,SLOT(draw1Point(float*,size_t)));
     connect(myThread,SIGNAL(drawPoints(float*,int)),this,SLOT(draw1Point(float*,int)));
@@ -202,8 +215,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::repaint(){
 
-//    ui->tableWidget->horizontalHeader()->setFixedWidth(ui->tableWidget->width()/4);
-//    qDebug("Repaint");
+    qDebug("FUcckkkkkkk");
+
 }
 
 
@@ -262,6 +275,9 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::on_pushButton_2_clicked()
 {
     w->show();
+    connect(ui->pushButton_3,SIGNAL(clicked(bool)),w,SLOT(SetText()));
+
+
 }
 
 void MainWindow::on_startPort_Button_clicked()
@@ -313,15 +329,15 @@ void MainWindow::on_pubm_Contorl_Button_clicked()
 
 
 
-    if(ui->pubm_Contorl_Button->text()==tr("开气泵"))
-    {
-        data[0] = 1;
-        ui->pubm_Contorl_Button->setText(tr("停止气泵"));
-    }
-    else{
-        data[0] = 2;
-        ui->pubm_Contorl_Button->setText(tr("开气泵"));
-    }
+//    if(ui->pubm_Contorl_Button->text()==tr("开气泵"))
+//    {
+//        data[0] = 1;
+//        ui->pubm_Contorl_Button->setText(tr("停止气泵"));
+//    }
+//    else{
+//        data[0] = 2;
+//        ui->pubm_Contorl_Button->setText(tr("开气泵"));
+//    }
 
     serial->write((char*)data,1);
 
@@ -460,4 +476,13 @@ void MainWindow::on_readParam_clicked()
 void MainWindow::on_reconnect_clicked()
 {
     emit reconnect();
+}
+
+
+
+void MainWindow::on_calibrate_button_clicked()
+{
+
+
+calibrator_window->show();
 }

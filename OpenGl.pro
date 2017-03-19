@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     Communicate/Communication.cpp \
     Threads/Threads.cpp \
     AprilTagsClass/AprilTagsClass.cpp \
-    cmdsender.cpp
+    cmdsender.cpp \
+    calibrator.cpp
 
 
 HEADERS  += mainwindow.h \
@@ -36,12 +37,14 @@ HEADERS  += mainwindow.h \
     Communicate/SocketClass/SocketClass.h \
     Communicate/Communication.h \
     Threads/Threads.h \
-    cmdsender.h
+    cmdsender.h \
+    calibrator.h
     AprilTagsClass/AprilTagsClass.h
 
 
 FORMS    += mainwindow.ui \
-    dialog.ui
+    dialog.ui \
+    calibrator.ui
 
 LIBS+=-L/usr/lib/x86_64-linux-gnu -lglut -lGLU\
       -L/usr/local/lib\

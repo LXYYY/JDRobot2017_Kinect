@@ -44,6 +44,7 @@ public:
     };
 
     int mode=SEARCH_BOX;
+    int nCircle=0;
     AprilTagsClass aprilTags;
     libfreenect2::Freenect2Device::IrCameraParams irParams;
     libfreenect2::Freenect2Device::ColorCameraParams colorParams;

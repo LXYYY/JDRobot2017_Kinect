@@ -76,6 +76,8 @@ private slots:
 
     void on_reconnect_clicked();
 
+    void on_calibrate_button_clicked();
+
 signals:
     void setBackGround();
     void changeMode();
