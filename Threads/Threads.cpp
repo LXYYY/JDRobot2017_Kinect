@@ -682,7 +682,7 @@ bool MyThread::showFrames(){
                             }
                             break;
                         case Yellow:
-                            if(fabs((350*150)-tBox.size.area())<3000)
+                            if(fabs((350*150)-tBox.size.area())<6000)
                                 tBox.status=STATUS_GOOD;
                             else{
                                 areaCheck=false;
