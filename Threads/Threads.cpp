@@ -682,7 +682,7 @@ bool MyThread::showFrames(){
                             }
                             break;
                         case Blue:
-                            if(fabs((180*150)-tBox.size.area())<2000)
+                            if(fabs((180*150)-tBox.size.area())<4500)
                                 tBox.status=STATUS_GOOD;
                             else{
                                 areaCheck=false;
@@ -726,9 +726,9 @@ bool MyThread::showFrames(){
 //                        }
 
                         if(areaCheck
-                            &&fabs(tBox.center.x)<400
-                            &&tBox.center.y<200
-                            &&tBox.center.y>-450)
+                            &&fabs(tBox.center.x)<200
+                            &&tBox.center.y<10
+                            &&tBox.center.y>-350)
                             boxes.push_back(tBox);
 
                         ///////push a new box end///////////
@@ -1291,6 +1291,7 @@ void MyThread::readParam(){
 }
 
 void MyThread::calibrate(){
+    cout<<"calibrate"<<endl;
     if(ifBackGroundSet==false){
         setBackGround();
         calibrateProgress=25;
