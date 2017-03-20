@@ -18,10 +18,11 @@ public:
 
  signals:
     void setBackGround();
-
+    void calibrate();
 private slots:
     void on_SetBackground_Button_clicked();
-
+public slots:
+    void setProgressbarValue(int value);
 private:
     Ui::Calibrator *ui;
 };

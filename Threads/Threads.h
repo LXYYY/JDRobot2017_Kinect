@@ -86,6 +86,7 @@ public:
     vector<Point3f> groundPtsDepth;
     vector<Point3f> groundPts;
     Mat_<double> R2G,T2G,T2O;
+    int calibrateProgress;
     Mat rotationMat;
     bool rotationMatInited=false;
     bool ifBackGroundSet=false;
@@ -124,9 +125,11 @@ signals:
     void pushDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
     void pushContours(unsigned char* imageData,int cols,int rows,int bytesPerLine);
     void pushProj(unsigned char* imageData,int cols,int rows,int bytesPerLine);
+    void setProgressbarValue(int value);
 
 public slots:
     void changeMode();
+    void calibrate();
     bool setBackGround();
     void setOrigin();
     void shutDownKinect();

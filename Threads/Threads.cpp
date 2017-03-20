@@ -663,11 +663,11 @@ bool MyThread::showFrames(){
                         tBox.color=tBoxPointsDepth.second;
                         tBox.z=z;
                         if(tBox.color==Yellow)
-                            tBox.z=30;
+                            tBox.z=35;
                         if(tBox.color==Blue)
-                            tBox.z=50;
+                            tBox.z=55;
                         if(tBox.color==Green)
-                            tBox.z=80;
+                            tBox.z=85;
                         cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl
                            <<"area:"<<tBox.size.area()<<","<<z<<endl
                           <<"center:"<<tBox.center<<endl;
@@ -726,9 +726,9 @@ bool MyThread::showFrames(){
 //                        }
 
                         if(areaCheck
-/*                            &&fabs(tBox.center.x)<400
+                            &&fabs(tBox.center.x)<400
                             &&tBox.center.y<200
-                            &&tBox.center.y>-450*/)
+                            &&tBox.center.y>-450)
                             boxes.push_back(tBox);
 
                         ///////push a new box end///////////
@@ -777,12 +777,12 @@ bool MyThread::showFrames(){
                     int tgtId;
                     float minX=1000000,minY=1000000;
                     for(size_t i=0;i<boxes.size();i++){
-                        if(nCircle==0)
-                            if((boxes.at(i).color==2||boxes.at(i).color==3)&&fabs(boxes.at(i).center.x)<minX){
-                                minX=fabs(boxes.at(i).center.x);
-                                tgtId=i;
-                            }
-                        else if(nCircle>0)
+//                        if(nCircle==0)
+//                            if((boxes.at(i).color==2||boxes.at(i).color==3)&&fabs(boxes.at(i).center.x)<minX){
+//                                minX=fabs(boxes.at(i).center.x);
+//                                tgtId=i;
+//                            }
+//                        else if(nCircle>0)
                             if(fabs(boxes.at(i).center.x)<minX){
                                 minX=fabs(boxes.at(i).center.x);
                                 tgtId=i;
@@ -1288,4 +1288,19 @@ void MyThread::readParam(){
     cout<<"read Param:"<<R2G<<endl<<T2G<<endl;
 //    ifBackGroundSet=true;
     ifOriginSet=true;
+}
+
+void MyThread::calibrate(){
+    if(ifBackGroundSet==false){
+        setBackGround();
+        calibrateProgress=25;
+        emit setProgressbarValue(calibrateProgress);
+        return;
+    }
+    else if(ifOriginSet==false){
+        setOrigin();
+        calibrateProgress=25+25*groundPts.size();
+        emit setProgressbarValue(calibrateProgress);
+        return;
+    }
 }

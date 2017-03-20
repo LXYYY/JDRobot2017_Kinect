@@ -7,7 +7,7 @@ Calibrator::Calibrator(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(this->ui->SetBackground_Button,SIGNAL(clicked(bool)),mainWindow,SLOT(repaint()));
-
+    ui->progressBar->setValue(0);
 }
 
 Calibrator::~Calibrator()
@@ -17,5 +17,9 @@ Calibrator::~Calibrator()
 
 void Calibrator::on_SetBackground_Button_clicked()
 {
-    emit setBackGround();
+    emit calibrate();
+}
+
+void Calibrator::setProgressbarValue(int value){
+    ui->progressBar->setValue(value);
 }

@@ -152,7 +152,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     calibrator_window = new Calibrator(this);
     connect(calibrator_window,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
-
+    connect(myThread,SIGNAL(setProgressbarValue(int)),calibrator_window,SLOT(setProgressbarValue(int)));
+    connect(calibrator_window,SIGNAL(calibrate()),myThread,SLOT(calibrate()));
 
     connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
     //connect(myThread,SIGNAL(drawPoints(float*,size_t)),this,SLOT(draw1Point(float*,size_t)));
