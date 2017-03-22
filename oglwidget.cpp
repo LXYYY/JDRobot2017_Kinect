@@ -243,16 +243,6 @@ void OGLWidget::paintGL()
     glRotatef(value3,0,1,0); //再以此以三个轴位中心做三次旋转
     glScalef(scale,scale,scale);
 
-    //glLoadIdentity();
-
-    float mat_aftercodtrans[16];// get the modelview matrix
-    glGetFloatv(GL_MODELVIEW_MATRIX, mat_aftercodtrans);
-
-    emit update_mat_info(mat_aftercodtrans,0);
-
-//    qDebug("mat_aftercod");
-
-    //HOM_Print(mat_aftercodtrans);
 
     glPushMatrix();
     //节点关节1
@@ -275,7 +265,6 @@ void OGLWidget::paintGL()
     glTranslated(0,-joint2.trans_y,0);
 
     DrawCoordinates(30);
-    DrawArm(20,20,30);
     glRotated(joint3.rotate_y,0,1,0);
 
     DrawCoordinates(30);
@@ -285,117 +274,15 @@ void OGLWidget::paintGL()
     glTranslated(0,-108.33,0);
 
     DrawCoordinates(30);
-    DrawArm(20,20,20);
-    HOM_MAT res={},mat={};
-
-
-
-
-
-
-   // copyMat(mat_aftercodtrans,mat);
-
-    HOM_MAT_Invers(mat_aftercodtrans);
-
-  //  emit update_mat_info(mat,0);
-
-    //emit update_mat_info(mat_aftercodtrans ,1);
-
-    glGetFloatv(GL_MODELVIEW_MATRIX, mat);
-
-
-    //HOM_MAT_Scale(mat,1/scale);
-    emit update_mat_info(mat ,1);
-
-    //qDebug("invers");
-
-
-
-    //HOM_MAT_Scale(mat_aftercodtrans,1/scale);
-
-
-
-    HOMs_Product(mat,mat_aftercodtrans,res);
-
-    HOM_MAT_Scale(res,1/scale/scale);
-
-    emit update_mat_info(res ,2);
-      HOM_Print(res);
-
-    HOM_Vect Point_O={0,10,0,1},Point_END_EFFECTS;
-
-    //VectHomOpera(Point_O,res,Point_END_EFFECTS);
-
-   // emit update_mat_info(Point_END_EFFECTS,3);
-
-   // qDebug("aa %f  %f   %f",Point_END_EFFECTS[0],Point_END_EFFECTS[1],Point_END_EFFECTS[2]);
 
     glPopMatrix();
 
     DrawCoordinates(1000);
 
-//    glPointSize(5);
-
-    for(int i=0;i<points.size();i++){
-
-        glPointSize(1);
-        glBegin(GL_POINTS);
-        glColor3f(1,1,1);
-        glVertex3f(points.at(i)[0],points.at(i)[2],points.at(i)[1]);
-//        glColor3f(0,1,0);
-//        glVertex3f(points.at(i)[0],0,points.at(i)[1]);
-        glEnd();
-        }
-
-    glColor3f(1,1,1);
-    glLineWidth(5);
-    glBegin(GL_LINES);
-
-//    HOM_Vect o={0,0,0,1};
-//    HOM_Vect x={100,0,0,1};
-//    HOM_Vect y={0,100,0,1};
-//    HOM_Vect z={0,0,100,1};
-//    HOM_Vect axis_after={0,0,0,1};
-
-    glColor3f(1,0,0);
-
-    //VectHomOpera(o,res,axis_after);
-    //glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
-
-    glVertex3f(0,0,0);
-    glVertex3f(res[0]*100,res[1]*100,res[2]*100);
-
-//    VectHomOpera(x,res,axis_after);
-//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
-
-
-    glColor3f(0,1,0);
-//    VectHomOpera(o,res,axis_after);
-//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
-
-
-//    VectHomOpera(y,res,axis_after);
-//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
-
-
-    glVertex3f(0,0,0);
-    glVertex3f(res[0+4]*100,res[1+4]*100,res[2+4]*100);
-
-
-    glColor3f(0,0,1);
-
-//    VectHomOpera(o,res,axis_after);
-//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
-
-//    VectHomOpera(z,res,axis_after);
-//    glVertex3f(axis_after[0],axis_after[1],axis_after[2]);
-
-
-    glVertex3f(0,0,0);
-    glVertex3f(res[0+8]*100,res[1+8]*100,res[2+8]*100);
-
+    glPointSize(10);
+    glBegin(GL_POINTS);
+    glVertex3f(p1[0],p1[1],p1[2]);
     glEnd();
-
 
 
 
@@ -430,6 +317,4 @@ void OGLWidget:: TimeBasedPaint(){
         repaint();
         needRepaint = false;
     }
-
-
 }

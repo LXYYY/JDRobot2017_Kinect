@@ -62,7 +62,8 @@ ORIGIN</string>
          </font>
         </property>
         <property name="text">
-         <string>STOP</string>
+         <string>SET
+POSITION</string>
         </property>
        </widget>
       </item>
@@ -112,8 +113,13 @@ OPEN</string>
           <verstretch>1</verstretch>
          </sizepolicy>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>16</pointsize>
+         </font>
+        </property>
         <property name="text">
-         <string>PushButton</string>
+         <string>EXIT</string>
         </property>
        </widget>
       </item>
@@ -142,25 +148,74 @@ OPEN</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_14">
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_13">
+          <widget class="QPushButton" name="Pitch_min">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-             <horstretch>0</horstretch>
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="font">
             <font>
-             <pointsize>14</pointsize>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
             </font>
            </property>
-           <property name="minimum">
-            <double>-90.000000000000000</double>
+           <property name="text">
+            <string>&lt;</string>
+           </property>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLCDNumber" name="END_EFFECTOR_Pitch_3"/>
+          <widget class="QLCDNumber" name="END_EFFECTOR_Pitch_3">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>2</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Pitch_pls">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>&gt;</string>
+           </property>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -178,33 +233,72 @@ OPEN</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_13">
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_12">
+          <widget class="QPushButton" name="hor_min">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="font">
             <font>
-             <pointsize>14</pointsize>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
             </font>
            </property>
-           <property name="minimum">
-            <double>293.000000000000000</double>
+           <property name="text">
+            <string>&lt;</string>
            </property>
-           <property name="maximum">
-            <double>785.000000000000000</double>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLCDNumber" name="Horizontal_Axis_3">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>2</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="hor_pls">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>&gt;</string>
+           </property>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>
@@ -224,48 +318,75 @@ OPEN</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_12">
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_11">
+          <widget class="QPushButton" name="Main_min">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="font">
             <font>
-             <pointsize>14</pointsize>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
             </font>
            </property>
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::UpDownArrows</enum>
+           <property name="text">
+            <string>&lt;</string>
            </property>
-           <property name="decimals">
-            <number>2</number>
+           <property name="autoRepeat">
+            <bool>true</bool>
            </property>
-           <property name="minimum">
-            <double>-360.000000000000000</double>
+           <property name="autoRepeatDelay">
+            <number>100</number>
            </property>
-           <property name="maximum">
-            <double>360.000000000000000</double>
-           </property>
-           <property name="singleStep">
-            <double>0.100000000000000</double>
-           </property>
-           <property name="value">
-            <double>0.000000000000000</double>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLCDNumber" name="Main_Axis_3">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-             <horstretch>1</horstretch>
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>2</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="smallDecimalPoint">
             <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="Main_pls">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>&gt;</string>
+           </property>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>
@@ -285,28 +406,74 @@ OPEN</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_15">
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_14">
+          <widget class="QPushButton" name="YAW_min">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-             <horstretch>0</horstretch>
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="font">
             <font>
-             <pointsize>14</pointsize>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
             </font>
            </property>
-           <property name="minimum">
-            <double>-180.000000000000000</double>
+           <property name="text">
+            <string>&lt;</string>
            </property>
-           <property name="maximum">
-            <double>180.000000000000000</double>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLCDNumber" name="END_EFFECTOR_YAW_3"/>
+          <widget class="QLCDNumber" name="END_EFFECTOR_YAW_3">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>2</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="YAW_pls">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>&gt;</string>
+           </property>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -324,36 +491,72 @@ OPEN</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_16">
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_15">
+          <widget class="QPushButton" name="Ver_min">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
            <property name="font">
             <font>
-             <pointsize>14</pointsize>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
             </font>
            </property>
-           <property name="minimum">
-            <double>-400.000000000000000</double>
+           <property name="text">
+            <string>&lt;</string>
            </property>
-           <property name="maximum">
-            <double>0.000000000000000</double>
+           <property name="autoRepeat">
+            <bool>true</bool>
            </property>
-           <property name="singleStep">
-            <double>0.100000000000000</double>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLCDNumber" name="Vertical_Axis_Display_3">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>2</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="ver_pls">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>1</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <family>Arial Black</family>
+             <pointsize>28</pointsize>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>&gt;</string>
+           </property>
+           <property name="autoRepeat">
+            <bool>true</bool>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>100</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>20</number>
            </property>
           </widget>
          </item>

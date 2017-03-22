@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>387</width>
+    <width>469</width>
     <height>404</height>
    </rect>
   </property>
@@ -121,6 +121,14 @@ BackGround</string>
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_9">
+        <property name="text">
+         <string>Set
+Origin</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_6">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -129,7 +137,7 @@ BackGround</string>
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Step One</string>
+         <string>step1</string>
         </property>
        </widget>
       </item>
@@ -156,6 +164,19 @@ BackGround</string>
         </property>
         <property name="text">
          <string>Read Para</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_10">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>EXIT</string>
         </property>
        </widget>
       </item>

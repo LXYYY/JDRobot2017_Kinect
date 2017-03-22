@@ -19,8 +19,18 @@ public:
  signals:
     void setBackGround();
     void calibrate();
+    void SendPara(OGLWidget::para_Def *);
+    void readParam();
 private slots:
     void on_SetBackground_Button_clicked();
+    void on_pushButton_9_clicked();
+
+    void on_pushButton_10_clicked();
+
+    void on_pushButton_6_clicked();
+
+    void on_pushButton_8_clicked();
+
 public slots:
     void setProgressbarValue(int value);
 private:

@@ -13,6 +13,14 @@ using namespace std;
 namespace Ui {
 class MainWindow;
 }
+typedef struct{
+
+    float x;
+    float y;
+    float z;
+    float vx;
+    unsigned char color;
+}Position_Para;
 
 class MainWindow : public QMainWindow
 {
@@ -29,6 +37,8 @@ public:
         PAGE1=0,
         PAGE2=1
     }Page;
+
+ // static OGLWidget::para_Def GetRealPara(void);
 
 private slots:
 
@@ -52,31 +62,21 @@ private slots:
 
     void on_startPort_Button_clicked();
 
-    void on_pubm_Contorl_Button_clicked();
-
-    void on_solid_control_button_clicked();
-
     void Read_Data();
-
-    void on_Rotate_valueChanged(int value);
-
-    void tttest();
 
     void pushRgbd(unsigned char* imageData,int cols,int rows,int bytesPerLine);
     void pushDepth(unsigned char* imageData,int cols,int rows,int bytesPerLine);
     void pushContours(unsigned char* imageData,int cols,int rows,int bytesPerLine);
     void pushProj(unsigned char* imageData,int cols,int rows,int bytesPerLine);
-    void on_chageImages_clicked();
 
-    void on_setOrigin_clicked();
-
-    void on_shutDownKinect_clicked();
-
-    void on_readParam_clicked();
-
-    void on_reconnect_clicked();
+    void GetVisionPoint(unsigned char id,float* point);
 
     void on_calibrate_button_clicked();
+
+    void One_Box_Finish();
+
+
+    void on_pushButton_3_clicked();
 
 signals:
     void setBackGround();
@@ -86,9 +86,13 @@ signals:
     void readParam();
     void reconnect();
 private:
-
+    float SerchAngle = 0;
+    Position_Para World_Pos;
+    Position_Para Vision_Pos;
+    Position_Para FrameConvert(Position_Para*);
+    unsigned char NoBoxCount;
+    void GeneCmd();
     void setBackgroundColor(QWidget *widget,QColor color);
-
     Ui::MainWindow *ui;
 };
 

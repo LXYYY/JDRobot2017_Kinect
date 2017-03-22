@@ -77,20 +77,52 @@ HOM_Vect ori = {0,0,0,1};
 float  world[5] = {0,0,0,0,0};
 
 float frameRotate;
+float x_offset = 0, y_offset =660;
+Position_Para MainWindow::FrameConvert(Position_Para *data){
+
+    Position_Para _world;
+    float ori[3];
+    frameRotate = (90-ui->openGLWidget->Real_Para.Main_Axis)/180.f*M_PI;
+    ori[0]=data->x+x_offset;
+    ori[1]=data->y;
+    ori[2]=data->z;
+    _world.color = data->color;
+  //  qDebug("x_Offset %f,Y_Offset %f",x_offset,y_offset);
+//    qDebug("color ori%d",data->color);
+    _world.x =  ori[0]*cos(frameRotate)+(ori[1]+y_offset)*sin(frameRotate);
+    _world.y= -ori[0]*sin(frameRotate)+(ori[1]+y_offset)*cos(frameRotate);
+    _world.z =  data->z;
+    _world.vx = -(90-(data->vx)/M_PI*180-ui->openGLWidget->Real_Para.Main_Axis);
+    ui->openGLWidget->p1[0]=_world.x;
+    ui->openGLWidget->p1[1]=_world.y;
+    ui->openGLWidget->p1[2]=_world.z;
+    ui->openGLWidget->needRepaint = true;
+
+    return _world;
+
+}
+
+
+
+
+
 void MainWindow::drawPoint(ReadData_Transform* data){
-        frameRotate = (90-ui->openGLWidget->Real_Para.Main_Axis)/180.f*M_PI;
-        ori[0]=data->x;
-        ori[1]=data->y;
-        ori[2]=data->z;
-        world[4] = data->color;
-        world[0] =  ori[0]*cos(frameRotate)+(ori[1]+660)*sin(frameRotate);
-        world[1] = -ori[0]*sin(frameRotate)+(ori[1]+660)*cos(frameRotate);
-        world[2] =  data->z;
-        world[3] = -(90-(data->vx)/M_PI*180-ui->openGLWidget->Real_Para.Main_Axis);
-        ui->openGLWidget->p1[0]=world[0];
-        ui->openGLWidget->p1[1]=world[1];
-        ui->openGLWidget->p1[2]=world[2];
-        ui->openGLWidget->needRepaint = true;
+
+}
+
+
+void MainWindow::GetVisionPoint(unsigned char id, float *point){
+
+    Position_Para _visionPoint;
+    _visionPoint.x = point[0];
+    _visionPoint.y = point[1];
+    _visionPoint.z = point[2];
+    _visionPoint.vx = atan2(point[4],point[3]);
+    _visionPoint.color = point[5];
+
+    //qDebug("EMIT%f,%f,%f,%f",_visionPoint.x,_visionPoint.y,_visionPoint.z,)
+
+    World_Pos = FrameConvert(&_visionPoint);
 }
 
 
@@ -119,21 +151,14 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<OGLWidget::para_Def>("OGLWidget::para_Def");
     //processer = new cvProcesser();
 
-
-
-
    // connect(&csender,SIGNAL(para_display(OGLWidget::para_Def)),this,SLOT(para_display(OGLWidget::para_Def)));
     //connect(&csender,SIGNAL(uart_send(OGLWidget::para_Def*)),this,SLOT(Uart_Send(OGLWidget::para_Def*)));
     //connect(&csender,SIGNAL(one_box_finish()),this,SLOT(One_Box_Finish()));
     w = new Dialog(this);
-    server = new QTcpServer();
-    server->listen(QHostAddress::Any, 6000);
+   // server = new QTcpServer();
+   // server->listen(QHostAddress::Any, 6000);
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("GBK"));
-    connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
-
-
-
-
+//    connect(server, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
     foreach(const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
         QSerialPort serial;
@@ -147,29 +172,28 @@ MainWindow::MainWindow(QWidget *parent) :
     //setMouseTracking(true);
 
     myThread= new MyThread();
-    communicator =new Communication();
-
-
+//    communicator =new Communication();
     calibrator_window = new Calibrator(this);
     connect(calibrator_window,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
     connect(myThread,SIGNAL(setProgressbarValue(int)),calibrator_window,SLOT(setProgressbarValue(int)));
     connect(calibrator_window,SIGNAL(calibrate()),myThread,SLOT(calibrate()));
+    connect(calibrator_window,SIGNAL(SendPara(OGLWidget::para_Def*)),this,SLOT(Uart_Send(OGLWidget::para_Def*)));
+    connect(calibrator_window,SIGNAL(readParam()),myThread,SLOT(readParam()));
+    //connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
 
-    connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
+     connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),this,SLOT(GetVisionPoint(unsigned char,float*)));
+     cout<<"test"<<endl;
+
     //connect(myThread,SIGNAL(drawPoints(float*,size_t)),this,SLOT(draw1Point(float*,size_t)));
-    connect(myThread,SIGNAL(drawPoints(float*,int)),this,SLOT(draw1Point(float*,int)));
-    connect(this,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
+   // connect(myThread,SIGNAL(drawPoints(float*,int)),this,SLOT(draw1Point(float*,int)));
+   // connect(this,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
     connect(myThread,SIGNAL(pushRgbd(unsigned char*,int,int,int)),this,SLOT(pushRgbd(unsigned char*,int,int,int)));
     connect(myThread,SIGNAL(pushDepth(unsigned char*,int,int,int)),this,SLOT(pushDepth(unsigned char*,int,int,int)));
     connect(myThread,SIGNAL(pushContours(unsigned char*,int,int,int)),this,SLOT(pushContours(unsigned char*,int,int,int)));
     connect(myThread,SIGNAL(pushProj(unsigned char*,int,int,int)),this,SLOT(pushProj(unsigned char*,int,int,int)));
-    connect(this,SIGNAL(changeMode()),myThread,SLOT(changeMode()));
-    connect(this,SIGNAL(setOrigin()),myThread,SLOT(setOrigin()));
-    connect(this,SIGNAL(shutDownKinect()),myThread,SLOT(shutDownKinect()));
-    connect(this,SIGNAL(readParam()),myThread,SLOT(readParam()));
-    connect(this,SIGNAL(reconnect()),communicator,SLOT(reconnect()));
+    connect(w,SIGNAL(SendPara(OGLWidget::para_Def*)),this,SLOT(Uart_Send(OGLWidget::para_Def*)));
     myThread->start();
-    communicator->start();
+//    communicator->start();
 }
 
 USB_Trans_TypeDef USB_trans;
@@ -182,14 +206,14 @@ void MainWindow::Uart_Send(OGLWidget::para_Def *_para){
     MAX_LIMMIT(_para->END_EFFECTOR_Pitch,90);
     MIN_LIMMIT(_para->END_EFFECTOR_Pitch,-90);
 
-    MAX_LIMMIT(_para->END_EFFECTOR_YAW,90);
-    MIN_LIMMIT(_para->END_EFFECTOR_YAW,-90);
+    MAX_LIMMIT(_para->END_EFFECTOR_YAW,180);
+    MIN_LIMMIT(_para->END_EFFECTOR_YAW,-0);
 //  MAX_LIMMIT(Aim_Para.Main_Axis,180);
 //  MIN_LIMMIT(Aim_Para.Main_Axis,-180);
     MAX_LIMMIT(_para->Horizontal_Axis,713);
-    MIN_LIMMIT(_para->Horizontal_Axis,293);
+    MIN_LIMMIT(_para->Horizontal_Axis,300);
     MAX_LIMMIT(_para->Vertial_Axis,0);
-    MIN_LIMMIT(_para->Vertial_Axis,-400);
+    MIN_LIMMIT(_para->Vertial_Axis,-430);
 
     USB_trans.head1 = 0xa5;
     USB_trans.head2 = 0x5a;
@@ -230,14 +254,20 @@ OGLWidget::para_Def MainWindow::caculateInvers(float x,float y,float z,float rot
 
    qDebug("World Position %f,%f,%f,%f",x,y,z,rotate);
 
-   _para.Main_Axis = 2*atan2((x + sqrt(x*x + y*y)),y)/3.1415926*180.f;
+   _para.Main_Axis =atan2(y,x)/3.1415926*180.f;
 
    if(_para.Main_Axis>180)
        _para.Main_Axis = _para.Main_Axis-360;
+  // if(_para.Main_Axis<0)
+   _para.END_EFFECTOR_YAW =((rotate)-_para.Main_Axis);
+//   else
+//   _para.END_EFFECTOR_YAW = ((rotate-_para.Main_Axis));
 
-   _para.END_EFFECTOR_YAW =(180+(rotate)-_para.Main_Axis);
-   if(_para.END_EFFECTOR_YAW>90)
-      _para.END_EFFECTOR_YAW-=180;
+   if(_para.END_EFFECTOR_YAW<0)
+      _para.END_EFFECTOR_YAW+=180;
+   else if(_para.END_EFFECTOR_YAW>180)
+       _para.END_EFFECTOR_YAW-=180;
+
    qDebug("Caculate Main_Axis %f",_para.Main_Axis);
    //ui->doubleSpinBox_4->setValue(ui->openGLWidget->Aim_Para.END_EFFECTOR_YAW);
    _para.Horizontal_Axis  = sqrt(x*x + y*y);
@@ -268,18 +298,38 @@ OGLWidget::para_Def MainWindow::caculateInvers(float x,float y,float z,float rot
 
 //}
 
+typedef struct{
+
+    uint8_t Blue;
+    uint8_t Yellow;
+    uint8_t Green;
+
+}BOX_Count_Def;
+BOX_Count_Def box_count;
+
+
+
+
 void MainWindow::on_pushButton_clicked()
 {
-    emit setBackGround();
+
 }
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    w->show();
-    connect(ui->pushButton_3,SIGNAL(clicked(bool)),w,SLOT(SetText()));
 
+  OGLWidget::para_Def testdef;
+    testdef = caculateInvers(World_Pos.x,World_Pos.y,World_Pos.z,World_Pos.vx);
+    testdef.Vertial_Axis+=10;
+    Uart_Send(&testdef);
 
 }
+
+//static OGLWidget::para_Def MainWindow::GetRealPara(){
+
+//    return ui->openGLWidget->Real_Para;
+
+//}
 
 void MainWindow::on_startPort_Button_clicked()
 {
@@ -292,7 +342,7 @@ void MainWindow::on_startPort_Button_clicked()
         if(serial->open(QIODevice::ReadWrite)==false)
             return ;
         //设置波特率
-        serial->setBaudRate(10000000);
+        serial->setBaudRate(115200);
         //设置数据位数
         serial->setDataBits(QSerialPort::Data8);
         //设置奇偶校验
@@ -324,73 +374,21 @@ void MainWindow::on_startPort_Button_clicked()
 
 }
 
-
-void MainWindow::on_pubm_Contorl_Button_clicked()
-{
-
-
-
-//    if(ui->pubm_Contorl_Button->text()==tr("开气泵"))
-//    {
-//        data[0] = 1;
-//        ui->pubm_Contorl_Button->setText(tr("停止气泵"));
-//    }
-//    else{
-//        data[0] = 2;
-//        ui->pubm_Contorl_Button->setText(tr("开气泵"));
-//    }
-
-    serial->write((char*)data,1);
-
-    // on_solid_control_button_clicked();
-
-}
-
-void MainWindow::on_solid_control_button_clicked()
-{
-
-    ui->openGLWidget->points.clear();
-
-    //    if(ui->solid_control_button->text()==tr("开电磁阀"))
-    //   {
-    //    data[0] = 3;
-    //    ui->solid_control_button->setText(tr("关电磁阀"));
-    //   }
-    //   else{
-    //    data[0] = 4;
-    //    ui->solid_control_button->setText(tr("开电磁阀"));
-    //   }
-
-    //    serial->write((char*)data,1);
-}
-
-void MainWindow::on_Rotate_valueChanged(int value)
-{
-    //caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
-}
-
-
 USB_Trans_TypeDef ReceiveBuffer2;
 void MainWindow::Read_Data(){
 
     static unsigned int HeadErrCount=0,SumErrCount=0;
-
        char *data = (char*)&ReceiveBuffer2;
        serial->read(data,sizeof(USB_Trans_TypeDef));
-
        if(((unsigned char*)data)[0]!=0xa5||((unsigned char*)data)[1]!=0x5a){
-
-
           // qDebug("Head Error");
             HeadErrCount++;
       //      ui->Box_Info_2->setText(QString().sprintf("Head Err:%d,SumErr:%d",HeadErrCount,SumErrCount));
-
            return ;
        }
         uint8_t sum = 0;
         sum = 0;
        for(int i=1;i<(sizeof(USB_Trans_TypeDef)-1);i++){
-
         sum+= ((unsigned char*)data)[i];
        }
        if(sum!=ReceiveBuffer2.sum){
@@ -402,22 +400,22 @@ void MainWindow::Read_Data(){
 
        }
 
-//       ui->openGLWidget->Real_Para.Horizontal_Axis = ReceiveBuffer2.Horizontal_Axis;
-//       ui->openGLWidget->needRepaint =true;
-//       ui->Horizontal_Axis->display(ui->openGLWidget->Real_Para.Horizontal_Axis);
-//       ui->openGLWidget->Real_Para.Vertial_Axis = ReceiveBuffer2.Vertial_Axis;
-//       ui->Vertical_Axis_Display->display(ui->openGLWidget->Real_Para.Vertial_Axis);
-//       ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch = ReceiveBuffer2.END_EFFECTOR_Pitch;
-//       ui->END_EFFECTOR_Pitch->display(ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch);
-//       ui->openGLWidget->Real_Para.END_EFFECTOR_YAW = ReceiveBuffer2.END_EFFECTOR_YAW;
-//       ui->END_EFFECTOR_YAW->display( ui->openGLWidget->Real_Para.END_EFFECTOR_YAW);
-//       ui->openGLWidget->Real_Para.Main_Axis = ReceiveBuffer2.Main_Axis_Rotate;
-//       ui->Main_Axis->display( ui->openGLWidget->Real_Para.Main_Axis);
-//       (ReceiveBuffer2.status.Main_Axis_Rotate)? setBackgroundColor(ui->Main_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Main_Axis,QColor(0,255,0,255));
-//       (ReceiveBuffer2.status.Horizontal_Axis)? setBackgroundColor(ui->Horizontal_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Horizontal_Axis,QColor(0,255,0,255));
-//       (ReceiveBuffer2.status.Vertial_Axis)? setBackgroundColor(ui->Vertical_Axis_Display,QColor(255,0,0,255)): setBackgroundColor(ui->Vertical_Axis_Display,QColor(0,255,0,255));
-//       (ReceiveBuffer2.status.END_EFFECTOR_YAW)? setBackgroundColor(ui->END_EFFECTOR_YAW,QColor(255,0,0,255)): setBackgroundColor(ui->END_EFFECTOR_YAW,QColor(0,255,0,255));
-//       (ReceiveBuffer2.status.END_EFFECTOR_Pitch)? setBackgroundColor(ui->END_EFFECTOR_Pitch,QColor(255,0,0,255)): setBackgroundColor(ui->END_EFFECTOR_Pitch,QColor(0,255,0,255));
+       ui->openGLWidget->Real_Para.Horizontal_Axis = ReceiveBuffer2.Horizontal_Axis;
+       ui->openGLWidget->needRepaint =true;
+       ui->Horizontal_Axis->display(ui->openGLWidget->Real_Para.Horizontal_Axis);
+       ui->openGLWidget->Real_Para.Vertial_Axis = ReceiveBuffer2.Vertial_Axis;
+       ui->Vertical_Axis_Display->display(ui->openGLWidget->Real_Para.Vertial_Axis);
+       ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch = ReceiveBuffer2.END_EFFECTOR_Pitch;
+       ui->END_EFFECTOR_Pitch->display(ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch);
+       ui->openGLWidget->Real_Para.END_EFFECTOR_YAW = ReceiveBuffer2.END_EFFECTOR_YAW;
+       ui->END_EFFECTOR_YAW->display( ui->openGLWidget->Real_Para.END_EFFECTOR_YAW);
+       ui->openGLWidget->Real_Para.Main_Axis = ReceiveBuffer2.Main_Axis_Rotate;
+       ui->Main_Axis->display( ui->openGLWidget->Real_Para.Main_Axis);
+       (ReceiveBuffer2.status.Main_Axis_Rotate)? setBackgroundColor(ui->Main_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Main_Axis,QColor(0,255,0,255));
+       (ReceiveBuffer2.status.Horizontal_Axis)? setBackgroundColor(ui->Horizontal_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Horizontal_Axis,QColor(0,255,0,255));
+       (ReceiveBuffer2.status.Vertial_Axis)? setBackgroundColor(ui->Vertical_Axis_Display,QColor(255,0,0,255)): setBackgroundColor(ui->Vertical_Axis_Display,QColor(0,255,0,255));
+       (ReceiveBuffer2.status.END_EFFECTOR_YAW)? setBackgroundColor(ui->END_EFFECTOR_YAW,QColor(255,0,0,255)): setBackgroundColor(ui->END_EFFECTOR_YAW,QColor(0,255,0,255));
+       (ReceiveBuffer2.status.END_EFFECTOR_Pitch)? setBackgroundColor(ui->END_EFFECTOR_Pitch,QColor(255,0,0,255)): setBackgroundColor(ui->END_EFFECTOR_Pitch,QColor(0,255,0,255));
        uint8_t check=0;
         for(int i=0;i<5;i++){
            check+=((uint8_t *)(&ReceiveBuffer2.status))[i];
@@ -438,47 +436,145 @@ void MainWindow::Read_Data(){
         }
 }
 
+
+void MainWindow::GeneCmd(){
+
+    OGLWidget::para_Def oricmd,sendCmd;
+
+    memset(&sendCmd,0,sizeof(OGLWidget::para_Def));
+
+    if(World_Pos.color==0)
+      {
+        NoBoxCount++;
+        qDebug("No Box count%d",NoBoxCount);
+        if(NoBoxCount==2){
+            qDebug("Next Angle");
+            NoBoxCount=0;
+            SerchAngle+=30;
+            sendCmd.Horizontal_Axis = 713;
+            sendCmd.Vertial_Axis = 0;
+            sendCmd.Main_Axis = SerchAngle;
+            csender.pushCmd(sendCmd);
+
+        }
+
+        return ;}
+
+    oricmd =  caculateInvers(World_Pos.x,World_Pos.y,World_Pos.z,World_Pos.vx);
+    //先设置所有值都为0
+    //开启气泵 关闭电磁阀，首先旋转主轴，水平轴 并且把垂直轴下降到目标高度的0.8倍位置
+    sendCmd.pumb = 1;
+    sendCmd.valve = 0;
+    sendCmd.Main_Axis = oricmd.Main_Axis;
+    sendCmd.Vertial_Axis = oricmd.Vertial_Axis*0.8;
+    sendCmd.Horizontal_Axis = oricmd.Horizontal_Axis;
+    sendCmd.END_EFFECTOR_Pitch = 0;
+    sendCmd.END_EFFECTOR_YAW = oricmd.END_EFFECTOR_YAW;
+    sendCmd.DelayTime = 1;
+    csender.pushCmd(sendCmd);
+
+    //所有位置就绪后，移动垂直轴到箱子表面
+    sendCmd.pumb = 0;
+    sendCmd.Vertial_Axis = oricmd.Vertial_Axis;
+    sendCmd.DelayTime = 0.5;
+    csender.pushCmd(sendCmd);
+    //箱子提起
+   // sendCmd.Main_Axis  = 0;
+   // sendCmd.Horizontal_Axis = 713;
+    sendCmd.Vertial_Axis = -50;
+    sendCmd.DelayTime = 0.5;
+    csender.pushCmd(sendCmd);
+    //判断颜色决定放在哪个盒子里
+    int color = World_Pos.color;
+   // qDebug("Color %d",color);
+    switch(color){
+        case 1:
+        switch(box_count.Green%4){
+        case 0:  oricmd = caculateInvers(150,-380,190+10*(box_count.Green%4),90); break;
+        case 1:  oricmd = caculateInvers(250,-380,190+10*(box_count.Green%4),90);break;
+        case 2:  oricmd = caculateInvers(150,-580,190+10*(box_count.Green%4),90);break;
+        case 3:  oricmd = caculateInvers(250,-580,190+10*(box_count.Green%4),90);break;
+        }
+        box_count.Green++;
+        break;
+        case 2:
+        box_count.Blue++;
+        oricmd = caculateInvers(0,-(370+200*(box_count.Blue%2)),280,90);break;
+        case 3  :
+        box_count.Yellow++;
+        oricmd = caculateInvers(-200,-485,310,90);break;
+        default: oricmd = caculateInvers(455,0,0,0);break;
+    }
+
+    //ui->Box_Info->setText(QString().sprintf("Blue:%d,Green:%d,Yellow:%d",box_count.Blue,box_count.Green,box_count.Yellow));
+
+    sendCmd.Main_Axis = oricmd.Main_Axis;
+    sendCmd.Horizontal_Axis = oricmd.Horizontal_Axis;
+    sendCmd.END_EFFECTOR_YAW = oricmd.END_EFFECTOR_YAW;
+    sendCmd.Vertial_Axis = -20;
+    sendCmd.DelayTime = 0.8;
+    csender.pushCmd(sendCmd);
+
+    //稍稍深入盒子中一点点 准备放下箱子
+
+    sendCmd.Main_Axis = oricmd.Main_Axis;
+    sendCmd.Horizontal_Axis = oricmd.Horizontal_Axis;
+    sendCmd.END_EFFECTOR_YAW = oricmd.END_EFFECTOR_YAW;
+    sendCmd.Vertial_Axis =oricmd.Vertial_Axis;
+    sendCmd.DelayTime = 0;
+    csender.pushCmd(sendCmd);
+
+
+    //打开电磁阀关闭气泵，升起垂直轴，扔下箱子
+    sendCmd.pumb = 1;
+    sendCmd.valve = 1;
+    sendCmd.DelayTime = 1;
+    //sendCmd.Vertial_Axis = -20;
+    csender.pushCmd(sendCmd);
+
+
+    sendCmd.pumb = 1;
+    sendCmd.valve = 1;
+    sendCmd.DelayTime = 0;
+    sendCmd.Vertial_Axis = -20;
+    csender.pushCmd(sendCmd);
+
+    //打开气泵，关闭电磁阀，回到原来位置，准备抓取下一个箱子
+
+    sendCmd.DelayTime = 0;
+    sendCmd.Main_Axis = SerchAngle;
+    sendCmd.Horizontal_Axis = 713;
+    csender.pushCmd(sendCmd);
+
+
+}
+
+
 void MainWindow::para_display(OGLWidget::para_Def _para){
 
-//    ui->Main_Axis->display(_para.Main_Axis);
-//    ui->Horizontal_Axis->display(_para.Horizontal_Axis);
-//    ui->Vertical_Axis_Display->display(_para.Vertial_Axis);
-//    ui->END_EFFECTOR_YAW->display(_para.END_EFFECTOR_YAW);
-//    ui->END_EFFECTOR_Pitch->display(_para.END_EFFECTOR_Pitch);
+    ui->Main_Axis->display(_para.Main_Axis);
+    ui->Horizontal_Axis->display(_para.Horizontal_Axis);
+    ui->Vertical_Axis_Display->display(_para.Vertial_Axis);
+    ui->END_EFFECTOR_YAW->display(_para.END_EFFECTOR_YAW);
+    ui->END_EFFECTOR_Pitch->display(_para.END_EFFECTOR_Pitch);
 
 }
 
-void MainWindow:: tttest(){
 
-//    qDebug("Fuck You");
 
+void MainWindow::One_Box_Finish(){
+
+    on_pushButton_2_clicked();
+    qDebug("Calculate Finish Prepare To move Be careful");
+
+    if(SerchAngle<=180)
+    {
+        csender.start();
+    }
+    else {
+     //Beep(1000,1000);
+    }
 }
-
-void MainWindow::on_chageImages_clicked()
-{
-    emit changeMode();
-}
-
-void MainWindow::on_setOrigin_clicked()
-{
-    emit setOrigin();
-}
-
-void MainWindow::on_shutDownKinect_clicked()
-{
-    emit shutDownKinect();
-}
-
-void MainWindow::on_readParam_clicked()
-{
-    emit readParam();
-}
-
-void MainWindow::on_reconnect_clicked()
-{
-    emit reconnect();
-}
-
 
 
 void MainWindow::on_calibrate_button_clicked()
@@ -486,4 +582,9 @@ void MainWindow::on_calibrate_button_clicked()
 
 
 calibrator_window->show();
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    w->show();
 }

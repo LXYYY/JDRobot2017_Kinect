@@ -496,6 +496,7 @@ bool MyThread::showFrames(){
 //        imshow("undistorted",rgbd);
 //        cout<<"test:"<<ifBackGroundSet<<","<<ifOriginSet<<endl;
         if(ifBackGroundSet&&!ifOriginSet){
+            imshow("backGround",backGround);
             cout<<"ifbackgoundset"<<ifBackGroundSet<<endl;
             cout<<"size:"<<groundPtsDepth.size()<<endl;
             aprilTags.processImage(rgbdCopy);
@@ -511,6 +512,8 @@ bool MyThread::showFrames(){
                 circle(rgbdCopy,Point(groundPtsDepth.at(0).x,groundPtsDepth.at(0).y),
                        3,Scalar(0,0,255),-1);
                 circle(rgbdCopy,Point(groundPtsDepth.at(1).x,groundPtsDepth.at(1).y),
+                       3,Scalar(0,0,255),-1);
+                circle(rgbdCopy,Point(groundPtsDepth.at(2).x,groundPtsDepth.at(2).y),
                        3,Scalar(0,0,255),-1);
 //                circle(rgbdCopy,Point(groundPtsDepth.at(2).x,groundPtsDepth.at(2).y),
 //                       3,Scalar(0,0,255),-1);
@@ -663,14 +666,14 @@ bool MyThread::showFrames(){
                         tBox.color=tBoxPointsDepth.second;
                         tBox.z=z;
                         if(tBox.color==Yellow)
-                            tBox.z=35;
+                            tBox.z=32;
                         if(tBox.color==Blue)
-                            tBox.z=55;
+                            tBox.z=52;
                         if(tBox.color==Green)
-                            tBox.z=85;
-                        cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl
-                           <<"area:"<<tBox.size.area()<<","<<z<<endl
-                          <<"center:"<<tBox.center<<endl;
+                            tBox.z=82;
+//                        cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl
+//                           <<"area:"<<tBox.size.area()<<","<<z<<endl
+//                          <<"center:"<<tBox.center<<endl;
 
                         bool areaCheck=true;
                         switch(tBoxPointsDepth.second){
@@ -727,7 +730,7 @@ bool MyThread::showFrames(){
 
                         if(areaCheck
                             &&fabs(tBox.center.x)<200
-                            &&tBox.center.y<10
+                            &&tBox.center.y<30
                             &&tBox.center.y>-350)
                             boxes.push_back(tBox);
 
@@ -809,6 +812,9 @@ bool MyThread::showFrames(){
                     point[5]=0;
                 }
                 emit sendPoint(Communication::TgtBox,point);
+
+
+
                 /////////send box centers to communication thread end////////
             }
             else if(mode==SEARCH_CASE){
@@ -953,7 +959,7 @@ bool MyThread::showFrames(){
         if(c=='g') setBackGround();
         else if(c=='r') readParam();
 #endif
-//        usleep(10000);
+        usleep(10000);
         return false;
     }
     catch(...){
@@ -1292,6 +1298,8 @@ void MyThread::readParam(){
 
 void MyThread::calibrate(){
     cout<<"calibrate"<<endl;
+//    emit setProgressbarValue(25);
+//return ;
     if(ifBackGroundSet==false){
         setBackGround();
         calibrateProgress=25;
