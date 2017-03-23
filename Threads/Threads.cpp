@@ -592,7 +592,7 @@ bool MyThread::showFrames(){
                 try{
 //                cout<<"contours.size():"<<contours0.size()<<endl;
                 for (int i = 0; i < contours0.size(); i++) {
-                    if (contours0.at(i).size()>4&&contourArea(contours0.at(i)) >= 2000) {
+                    if (contours0.at(i).size()>4&&contourArea(contours0.at(i)) >= 1500) {
                         vector<int> convex;
                         vector<Point> convexP;
                         vector<Vec4i> convexity;
@@ -615,7 +615,7 @@ bool MyThread::showFrames(){
 //                            cout<<"test convexity:"<<max<<","<<scdMax<<endl;
 
                             if(max>10){
-                                continue;
+//                                continue;
                             }
 
                         }
@@ -666,19 +666,19 @@ bool MyThread::showFrames(){
                         tBox.color=tBoxPointsDepth.second;
                         tBox.z=z;
                         if(tBox.color==Yellow)
-                            tBox.z=32;
+                            tBox.z=32-15;
                         if(tBox.color==Blue)
-                            tBox.z=52;
+                            tBox.z=52-15;
                         if(tBox.color==Green)
-                            tBox.z=82;
-//                        cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl
-//                           <<"area:"<<tBox.size.area()<<","<<z<<endl
-//                          <<"center:"<<tBox.center<<endl;
+                            tBox.z=82-15;
+                        cout<<"size:"<<tBox.size.width<<","<<tBox.size.height<<endl
+                           <<"area:"<<tBox.size.area()<<","<<z<<endl
+                          <<"center:"<<tBox.center<<endl<<"color:"<<tBoxPointsDepth.second<<endl;
 
                         bool areaCheck=true;
                         switch(tBoxPointsDepth.second){
                         case Green:
-                            if(fabs(tBox.size.area()-(180*70))<3000)
+                            if(fabs(tBox.size.area()-(180*80))<4000)
                                 tBox.status=STATUS_GOOD;
                             else{
                                 areaCheck=false;
@@ -730,7 +730,7 @@ bool MyThread::showFrames(){
 
                         if(areaCheck
                             &&fabs(tBox.center.x)<200
-                            &&tBox.center.y<30
+                            &&tBox.center.y<100
                             &&tBox.center.y>-350)
                             boxes.push_back(tBox);
 
@@ -745,7 +745,7 @@ bool MyThread::showFrames(){
 //                imshow("thresh",binaryMat);
 
                 ///////make a image to check//////////
-
+                cout<<boxes.size()<<endl;
                 for(int i=0;i<boxes.size();i++){
                     Scalar color;
                     switch(boxes.at(i).color){
@@ -1035,14 +1035,14 @@ pair<vector<Point3f>, int> MyThread::getBoxPointsDepth(Mat depthMat,Mat rgb, Mat
             }
         }
         int color;
-        if((g-b)/b>0.2&&(g-r)/r>0.2)
+        if(fabs(g-b)/b<0.2&&(g-r)/r>0.2)
             color=1;
         else if((b-g)/g>0.2&&(b-r)/r>0.2)
             color=2;
         else color=3;
         //    cout<<"test getBoxPointsDepth"<<endl;
         //    cout<<(Mat)points<<endl;
-//            cout<<"test RGB:"<<b<<","<<g<<","<<r<<","<<color<<endl;
+        cout<<"test RGB:"<<b<<","<<g<<","<<r<<","<<color<<endl;
         return pair<vector<Point3f>,int>(points,color);
     }
     catch(...){

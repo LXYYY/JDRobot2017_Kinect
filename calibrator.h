@@ -19,8 +19,9 @@ public:
  signals:
     void setBackGround();
     void calibrate();
-    void SendPara(OGLWidget::para_Def *);
+    void SendPara(para_Def *);
     void readParam();
+    void Setoffset(float,float);
 private slots:
     void on_SetBackground_Button_clicked();
     void on_pushButton_9_clicked();
@@ -31,10 +32,22 @@ private slots:
 
     void on_pushButton_8_clicked();
 
+    void on_pushButton_2_clicked();
+
+    void on_y_offset_min_clicked();
+
+    void on_x_offset_min_clicked();
+
+    void on_pushButton_5_clicked();
+
 public slots:
     void setProgressbarValue(int value);
 private:
     Ui::Calibrator *ui;
+
+    int x_offset;
+    int y_offset;
+
 };
 
 #endif // CALIBRATOR_H

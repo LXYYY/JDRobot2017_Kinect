@@ -1,6 +1,6 @@
 #ifndef OGLWIDGET_H
 #define OGLWIDGET_H
-
+#include "mainwindow.h"
 #include <QWidget>
 #include <QOpenGLWidget>
 #include "GL/gl.h"
@@ -100,23 +100,11 @@ public:
     }Draw_point;
 
 
-    typedef struct{
+    //para_Def Real_Para;
 
-        float Horizontal_Axis;
-        float Vertial_Axis;
-        float Main_Axis;
-        float END_EFFECTOR_YAW;
-        float END_EFFECTOR_Pitch;
-        uint8_t pumb;
-        uint8_t valve;
-        uint8_t CMD_ID; //用于心跳包检测的ID
-        unsigned int DelayTime;
-        unsigned char color;
+    //para_Def Aim_Para;
 
-    }para_Def;
-    para_Def Real_Para;
-    para_Def Aim_Para;
-
+    //void DrawStruct(HOM_MAT AfterTrans,para_Def *_para,HOM_MAT RefMat,bool flag);
 
     double test;
     double value2;
@@ -124,8 +112,6 @@ public:
     double Vx,Vy,Vz;
     double MoveX,MoveY,MoveZ;
     double scale;
-    vector<float*> points;
-    joint joint1,joint2,joint3,joint4;
     bool needRepaint;
     QSerialPort *serial;
     bool serialReady;

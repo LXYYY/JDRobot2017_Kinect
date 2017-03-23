@@ -2,7 +2,7 @@
 #include "ui_calibrator.h"
 
 
-OGLWidget::para_Def Calibrator_Position;
+para_Def Calibrator_Position;
 
 
 Calibrator::Calibrator(QWidget *parent) :
@@ -12,6 +12,10 @@ Calibrator::Calibrator(QWidget *parent) :
     ui->setupUi(this);
 //    connect(this->ui->SetBackground_Button,SIGNAL(clicked(bool)),mainWindow,SLOT(repaint()));
     ui->progressBar->setValue(0);
+
+
+    x_offset = 0;
+    y_offset = 660;
 
 }
 
@@ -77,7 +81,33 @@ void Calibrator::on_pushButton_6_clicked()
     SendPara(&Calibrator_Position);
 }
 
+
+
 void Calibrator::on_pushButton_8_clicked()
 {
     emit readParam();
+}
+
+void Calibrator::on_pushButton_2_clicked()
+{
+    y_offset+=10;
+    emit Setoffset(x_offset,y_offset);
+}
+
+void Calibrator::on_y_offset_min_clicked()
+{
+    y_offset-=10;
+    emit Setoffset(x_offset,y_offset);
+}
+
+void Calibrator::on_x_offset_min_clicked()
+{
+    x_offset-=10;
+    emit Setoffset(x_offset,y_offset);
+}
+
+void Calibrator::on_pushButton_5_clicked()
+{
+    x_offset+=10;
+    emit Setoffset(x_offset,y_offset);
 }

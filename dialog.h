@@ -52,11 +52,11 @@ private slots:
 
 signals:
 
-    void SendPara(OGLWidget::para_Def *);
+    void SendPara(para_Def *);
 
 private:
     Ui::Dialog *ui;
-    OGLWidget::para_Def Manual_Position;
+    para_Def Manual_Position;
 };
 
 #endif // DIALOG_H

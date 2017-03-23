@@ -19,18 +19,18 @@ public:
     QSemaphore *cmd_over;
     QSerialPort *port;
     bool StartWaitForFinish;
-  //  std::vector<OGLWidget::para_Def*> commands;
-    QQueue<OGLWidget::para_Def> commands;
+  //  std::vector<para_Def *> commands;
+    QQueue<para_Def> commands;
     bool setSemaphore(QSemaphore*);
     bool setPort(QSerialPort*);
-    bool pushCmd(OGLWidget::para_Def);
+    bool pushCmd(para_Def );
     QMutex mutex;
 
-    OGLWidget::para_Def popCmd(void);
+    para_Def popCmd(void);
     void run(void);
 signals:
-    void para_display(OGLWidget::para_Def);
-    void uart_send(OGLWidget::para_Def*);
+    void para_display(para_Def );
+    void uart_send(para_Def *);
     void one_box_finish();
 //private:
 

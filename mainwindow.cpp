@@ -25,7 +25,7 @@ QSerialPort *serial;
 QTcpServer *server;
 
 
-static uint8_t cmd_id = 0;
+ uint8_t cmd_id = 0;
 
 void MainWindow:: acceptConnection()
 {
@@ -78,21 +78,21 @@ float  world[5] = {0,0,0,0,0};
 
 float frameRotate;
 float x_offset = 0, y_offset =660;
-Position_Para MainWindow::FrameConvert(Position_Para *data){
+Position_Para MainWindow::FrameConvert(Position_Para *data,float Main_Rotate){
 
     Position_Para _world;
     float ori[3];
-    frameRotate = (90-ui->openGLWidget->Real_Para.Main_Axis)/180.f*M_PI;
+    frameRotate = (90-Main_Rotate)/180.f*M_PI;
     ori[0]=data->x+x_offset;
     ori[1]=data->y;
     ori[2]=data->z;
     _world.color = data->color;
-  //  qDebug("x_Offset %f,Y_Offset %f",x_offset,y_offset);
+   // qDebug("x_Offset %f,Y_Offset %f",x_offset,y_offset);
 //    qDebug("color ori%d",data->color);
     _world.x =  ori[0]*cos(frameRotate)+(ori[1]+y_offset)*sin(frameRotate);
     _world.y= -ori[0]*sin(frameRotate)+(ori[1]+y_offset)*cos(frameRotate);
     _world.z =  data->z;
-    _world.vx = -(90-(data->vx)/M_PI*180-ui->openGLWidget->Real_Para.Main_Axis);
+    _world.vx = -(90-(data->vx)/M_PI*180-Main_Rotate);
     ui->openGLWidget->p1[0]=_world.x;
     ui->openGLWidget->p1[1]=_world.y;
     ui->openGLWidget->p1[2]=_world.z;
@@ -111,9 +111,9 @@ void MainWindow::drawPoint(ReadData_Transform* data){
 }
 
 
+Position_Para _visionPoint;
 void MainWindow::GetVisionPoint(unsigned char id, float *point){
 
-    Position_Para _visionPoint;
     _visionPoint.x = point[0];
     _visionPoint.y = point[1];
     _visionPoint.z = point[2];
@@ -122,7 +122,7 @@ void MainWindow::GetVisionPoint(unsigned char id, float *point){
 
     //qDebug("EMIT%f,%f,%f,%f",_visionPoint.x,_visionPoint.y,_visionPoint.z,)
 
-    World_Pos = FrameConvert(&_visionPoint);
+    World_Pos = FrameConvert(&_visionPoint,Real_Para.Main_Axis);
 }
 
 
@@ -148,7 +148,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //
     ui->setupUi(this);
 
-    qRegisterMetaType<OGLWidget::para_Def>("OGLWidget::para_Def");
+    qRegisterMetaType<para_Def>("para_Def");
     //processer = new cvProcesser();
 
    // connect(&csender,SIGNAL(para_display(OGLWidget::para_Def)),this,SLOT(para_display(OGLWidget::para_Def)));
@@ -170,17 +170,19 @@ MainWindow::MainWindow(QWidget *parent) :
     //ui->openGLWidget->object.push_back(gLObject::DrawPoint(1,1,1));
     //w->setWindowFlags(Qt::Widget);
     //setMouseTracking(true);
-
+    csender.cmd_over = &cmdsemaphore;
     myThread= new MyThread();
 //    communicator =new Communication();
     calibrator_window = new Calibrator(this);
     connect(calibrator_window,SIGNAL(setBackGround()),myThread,SLOT(setBackGround()));
     connect(myThread,SIGNAL(setProgressbarValue(int)),calibrator_window,SLOT(setProgressbarValue(int)));
     connect(calibrator_window,SIGNAL(calibrate()),myThread,SLOT(calibrate()));
-    connect(calibrator_window,SIGNAL(SendPara(OGLWidget::para_Def*)),this,SLOT(Uart_Send(OGLWidget::para_Def*)));
+    connect(calibrator_window,SIGNAL(SendPara(para_Def*)),this,SLOT(Uart_Send(para_Def*)));
     connect(calibrator_window,SIGNAL(readParam()),myThread,SLOT(readParam()));
-    //connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
+    connect(calibrator_window,SIGNAL(Setoffset(float,float)),this,SLOT(GetOffset(float,float)));
 
+    //connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),communicator,SLOT(sendPoint(unsigned char,float*)));
+    connect(&csender,SIGNAL(uart_send(para_Def*)),this,SLOT(Uart_Send(para_Def*)));
      connect(myThread,SIGNAL(sendPoint(unsigned char,float*)),this,SLOT(GetVisionPoint(unsigned char,float*)));
      cout<<"test"<<endl;
 
@@ -191,17 +193,14 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(myThread,SIGNAL(pushDepth(unsigned char*,int,int,int)),this,SLOT(pushDepth(unsigned char*,int,int,int)));
     connect(myThread,SIGNAL(pushContours(unsigned char*,int,int,int)),this,SLOT(pushContours(unsigned char*,int,int,int)));
     connect(myThread,SIGNAL(pushProj(unsigned char*,int,int,int)),this,SLOT(pushProj(unsigned char*,int,int,int)));
-    connect(w,SIGNAL(SendPara(OGLWidget::para_Def*)),this,SLOT(Uart_Send(OGLWidget::para_Def*)));
+    connect(w,SIGNAL(SendPara(para_Def*)),this,SLOT(Uart_Send(para_Def*)));
     myThread->start();
 //    communicator->start();
 }
 
 USB_Trans_TypeDef USB_trans;
-void MainWindow::Uart_Send(OGLWidget::para_Def *_para){
-
-
-
-    qDebug("Uart Trans Main %f,Horizontal %f,Vertial%f",_para->Main_Axis,_para->Horizontal_Axis,_para->Vertial_Axis);
+void MainWindow::Uart_Send(para_Def *_para){
+    qDebug("[uartsend]Uart Trans Main %f,Horizontal %f,Vertial%f",_para->Main_Axis,_para->Horizontal_Axis,_para->Vertial_Axis);
 
     MAX_LIMMIT(_para->END_EFFECTOR_Pitch,90);
     MIN_LIMMIT(_para->END_EFFECTOR_Pitch,-90);
@@ -228,7 +227,7 @@ void MainWindow::Uart_Send(OGLWidget::para_Def *_para){
     USB_trans.PUMB = _para->pumb;
     USB_trans.VALVE = _para->valve;
     USB_trans.CMD_ID = cmd_id++;
-    qDebug("Send CMD ID%d",USB_trans.CMD_ID);
+    qDebug("[uartsend]Send CMD ID%d",USB_trans.CMD_ID);
     serial->write((const char *)&USB_trans,sizeof(USB_Trans_TypeDef));
 
 }
@@ -248,11 +247,11 @@ void MainWindow::repaint(){
 
 
 
-OGLWidget::para_Def MainWindow::caculateInvers(float x,float y,float z,float rotate){
+para_Def MainWindow::caculateInvers(float x,float y,float z,float rotate){
 
-   OGLWidget::para_Def _para;
+   para_Def _para;
 
-   qDebug("World Position %f,%f,%f,%f",x,y,z,rotate);
+   qDebug("[Invers]World Position %f,%f,%f,%f",x,y,z,rotate);
 
    _para.Main_Axis =atan2(y,x)/3.1415926*180.f;
 
@@ -268,35 +267,17 @@ OGLWidget::para_Def MainWindow::caculateInvers(float x,float y,float z,float rot
    else if(_para.END_EFFECTOR_YAW>180)
        _para.END_EFFECTOR_YAW-=180;
 
-   qDebug("Caculate Main_Axis %f",_para.Main_Axis);
+   qDebug("[Invers]Caculate Main_Axis %f",_para.Main_Axis);
    //ui->doubleSpinBox_4->setValue(ui->openGLWidget->Aim_Para.END_EFFECTOR_YAW);
    _para.Horizontal_Axis  = sqrt(x*x + y*y);
    _para.Vertial_Axis  =  z-450;
    ui->openGLWidget->needRepaint = true;
-   qDebug("x:%f,y:%f,Z:%f,Angle:%f",x,y,z,_para.END_EFFECTOR_YAW);
-   qDebug("Calculate Horizontal_Axis:%f,Vertial_Axis:%f,Main_Axis:%f",ui->openGLWidget->Aim_Para.Horizontal_Axis,ui->openGLWidget->Aim_Para.Vertial_Axis,ui->openGLWidget->Aim_Para.Main_Axis);
-   qDebug("Yaw:%f",_para.END_EFFECTOR_YAW);
+   qDebug("[Invers]x:%f,y:%f,Z:%f,Angle:%f",x,y,z,_para.END_EFFECTOR_YAW);
+   //qDebug("Calculate Horizontal_Axis:%f,Vertial_Axis:%f,Main_Axis:%f",ui->openGLWidget->Aim_Para.Horizontal_Axis,ui->openGLWidget->Aim_Para.Vertial_Axis,ui->openGLWidget->Aim_Para.Main_Axis);
+   qDebug("[Invers]Yaw:%f",_para.END_EFFECTOR_YAW);
    return _para;
 }
 
-
-//void MainWindow::on_Move_X_valueChanged(int value)
-//{
-//    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
-
-//}
-
-//void MainWindow::on_Move_Y_valueChanged(int value)
-//{
-//    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
-
-//}
-
-//void MainWindow::on_Move_z_valueChanged(int value)
-//{
-//    caculateInvers(ui->Move_X->value(),ui->Move_Y->value(),ui->Move_z->value());
-
-//}
 
 typedef struct{
 
@@ -318,18 +299,16 @@ void MainWindow::on_pushButton_clicked()
 void MainWindow::on_pushButton_2_clicked()
 {
 
-  OGLWidget::para_Def testdef;
-    testdef = caculateInvers(World_Pos.x,World_Pos.y,World_Pos.z,World_Pos.vx);
-    testdef.Vertial_Axis+=10;
-    Uart_Send(&testdef);
+//  para_Def testdef;
+//    testdef = caculateInvers(World_Pos.x,World_Pos.y,World_Pos.z,World_Pos.vx);
+//    testdef.Vertial_Axis+=10;
+//    Uart_Send(&testdef);
+
+    GeneCmd();
+    csender.start();
+
 
 }
-
-//static OGLWidget::para_Def MainWindow::GetRealPara(){
-
-//    return ui->openGLWidget->Real_Para;
-
-//}
 
 void MainWindow::on_startPort_Button_clicked()
 {
@@ -400,17 +379,16 @@ void MainWindow::Read_Data(){
 
        }
 
-       ui->openGLWidget->Real_Para.Horizontal_Axis = ReceiveBuffer2.Horizontal_Axis;
-       ui->openGLWidget->needRepaint =true;
-       ui->Horizontal_Axis->display(ui->openGLWidget->Real_Para.Horizontal_Axis);
-       ui->openGLWidget->Real_Para.Vertial_Axis = ReceiveBuffer2.Vertial_Axis;
-       ui->Vertical_Axis_Display->display(ui->openGLWidget->Real_Para.Vertial_Axis);
-       ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch = ReceiveBuffer2.END_EFFECTOR_Pitch;
-       ui->END_EFFECTOR_Pitch->display(ui->openGLWidget->Real_Para.END_EFFECTOR_Pitch);
-       ui->openGLWidget->Real_Para.END_EFFECTOR_YAW = ReceiveBuffer2.END_EFFECTOR_YAW;
-       ui->END_EFFECTOR_YAW->display( ui->openGLWidget->Real_Para.END_EFFECTOR_YAW);
-       ui->openGLWidget->Real_Para.Main_Axis = ReceiveBuffer2.Main_Axis_Rotate;
-       ui->Main_Axis->display( ui->openGLWidget->Real_Para.Main_Axis);
+       Real_Para.Horizontal_Axis = ReceiveBuffer2.Horizontal_Axis;
+       ui->Horizontal_Axis->display(Real_Para.Horizontal_Axis);
+       Real_Para.Vertial_Axis = ReceiveBuffer2.Vertial_Axis;
+       ui->Vertical_Axis_Display->display(Real_Para.Vertial_Axis);
+       Real_Para.END_EFFECTOR_Pitch = ReceiveBuffer2.END_EFFECTOR_Pitch;
+       ui->END_EFFECTOR_Pitch->display(Real_Para.END_EFFECTOR_Pitch);
+       Real_Para.END_EFFECTOR_YAW = ReceiveBuffer2.END_EFFECTOR_YAW;
+       ui->END_EFFECTOR_YAW->display( Real_Para.END_EFFECTOR_YAW);
+       Real_Para.Main_Axis = ReceiveBuffer2.Main_Axis_Rotate;
+       ui->Main_Axis->display( Real_Para.Main_Axis);
        (ReceiveBuffer2.status.Main_Axis_Rotate)? setBackgroundColor(ui->Main_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Main_Axis,QColor(0,255,0,255));
        (ReceiveBuffer2.status.Horizontal_Axis)? setBackgroundColor(ui->Horizontal_Axis,QColor(255,0,0,255)): setBackgroundColor(ui->Horizontal_Axis,QColor(0,255,0,255));
        (ReceiveBuffer2.status.Vertial_Axis)? setBackgroundColor(ui->Vertical_Axis_Display,QColor(255,0,0,255)): setBackgroundColor(ui->Vertical_Axis_Display,QColor(0,255,0,255));
@@ -434,14 +412,17 @@ void MainWindow::Read_Data(){
                 }
             }
         }
+
+
+   ui->openGLWidget->needRepaint =true;
 }
 
 
 void MainWindow::GeneCmd(){
 
-    OGLWidget::para_Def oricmd,sendCmd;
+    para_Def oricmd,sendCmd;
 
-    memset(&sendCmd,0,sizeof(OGLWidget::para_Def));
+    memset(&sendCmd,0,sizeof(para_Def));
 
     if(World_Pos.color==0)
       {
@@ -550,7 +531,7 @@ void MainWindow::GeneCmd(){
 }
 
 
-void MainWindow::para_display(OGLWidget::para_Def _para){
+void MainWindow::para_display(para_Def _para){
 
     ui->Main_Axis->display(_para.Main_Axis);
     ui->Horizontal_Axis->display(_para.Horizontal_Axis);
@@ -560,7 +541,31 @@ void MainWindow::para_display(OGLWidget::para_Def _para){
 
 }
 
+void MainWindow::GetOffset(float _offset_x,float _offset_y){
 
+    x_offset = _offset_x;
+    y_offset = _offset_y;
+
+    ManualAdjust_ReCalculatePosition();
+
+
+}
+
+void MainWindow::ManualAdjust_Prepare(){
+
+    ManualAdjust_Vision = _visionPoint;
+    ManualAdjust_Vision_MainAngle = Real_Para.Main_Axis;
+    qDebug("[ManualAdjust]prepared");
+}
+
+void MainWindow::ManualAdjust_ReCalculatePosition(){
+    ManualAdjust_AfterAdjust = FrameConvert(&ManualAdjust_Vision,ManualAdjust_Vision_MainAngle);
+    para_Def _Manual_Adjust_Para = caculateInvers(ManualAdjust_AfterAdjust.x,ManualAdjust_AfterAdjust.y,ManualAdjust_AfterAdjust.z,ManualAdjust_AfterAdjust.vx);
+
+    _Manual_Adjust_Para.Vertial_Axis+=20;
+
+    Uart_Send(&_Manual_Adjust_Para);
+}
 
 void MainWindow::One_Box_Finish(){
 
@@ -580,8 +585,10 @@ void MainWindow::One_Box_Finish(){
 void MainWindow::on_calibrate_button_clicked()
 {
 
+    ManualAdjust_Prepare();
+    calibrator_window->show();
 
-calibrator_window->show();
+
 }
 
 void MainWindow::on_pushButton_3_clicked()

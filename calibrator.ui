@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>469</width>
+    <width>546</width>
     <height>404</height>
    </rect>
   </property>
@@ -23,6 +23,19 @@
       </sizepolicy>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="1">
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Y+</string>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="2">
        <widget class="QPushButton" name="pushButton_5">
         <property name="sizePolicy">
@@ -37,7 +50,7 @@
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="x_offset_min">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -58,12 +71,12 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>PushButton</string>
+         <string>10MM/PRESS</string>
         </property>
        </widget>
       </item>
       <item row="2" column="1">
-       <widget class="QPushButton" name="pushButton_3">
+       <widget class="QPushButton" name="y_offset_min">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -72,19 +85,6 @@
         </property>
         <property name="text">
          <string>Y-</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="pushButton_2">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Y+</string>
         </property>
        </widget>
       </item>

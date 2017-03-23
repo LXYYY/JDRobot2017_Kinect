@@ -10,6 +10,25 @@
 #include "clientclass.h"
 #include "oglwidget.h"
 using namespace std;
+
+
+typedef struct{
+
+    float Horizontal_Axis;
+    float Vertial_Axis;
+    float Main_Axis;
+    float END_EFFECTOR_YAW;
+    float END_EFFECTOR_Pitch;
+    uint8_t pumb;
+    uint8_t valve;
+    uint8_t CMD_ID; //用于心跳包检测的ID
+    unsigned int DelayTime;
+    unsigned char color;
+
+}para_Def;
+
+
+
 namespace Ui {
 class MainWindow;
 }
@@ -22,6 +41,9 @@ typedef struct{
     unsigned char color;
 }Position_Para;
 
+
+
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -33,12 +55,18 @@ public:
     QImage rgbd,depth,contours,proj;
     uint8_t data[1];
 
+
+    para_Def Real_Para;
+    para_Def Aim_Para;
+
     enum changeImageE{
         PAGE1=0,
         PAGE2=1
     }Page;
 
  // static OGLWidget::para_Def GetRealPara(void);
+
+
 
 private slots:
 
@@ -50,11 +78,11 @@ private slots:
 
     void drawPoint(ReadData_Transform* data);
 
-    void para_display(OGLWidget::para_Def);
+    void para_display(para_Def);
 
-    void Uart_Send(OGLWidget::para_Def *);
+    void Uart_Send(para_Def *);
 
-    OGLWidget::para_Def caculateInvers(float x,float y,float z,float rotate);
+    para_Def caculateInvers(float x,float y,float z,float rotate);
 
     void on_pushButton_clicked();
 
@@ -75,8 +103,11 @@ private slots:
 
     void One_Box_Finish();
 
+    //void Require_Real_Position();
 
     void on_pushButton_3_clicked();
+
+    void GetOffset(float ,float);
 
 signals:
     void setBackGround();
@@ -86,10 +117,17 @@ signals:
     void readParam();
     void reconnect();
 private:
+
+    void ManualAdjust_ReCalculatePosition();
+    void ManualAdjust_Prepare(void);
+    Position_Para ManualAdjust_Vision;
+    Position_Para ManualAdjust_AfterAdjust;
+    float ManualAdjust_Vision_MainAngle;
+
     float SerchAngle = 0;
     Position_Para World_Pos;
     Position_Para Vision_Pos;
-    Position_Para FrameConvert(Position_Para*);
+    Position_Para FrameConvert(Position_Para *data,float Main_Rotate);
     unsigned char NoBoxCount;
     void GeneCmd();
     void setBackgroundColor(QWidget *widget,QColor color);
